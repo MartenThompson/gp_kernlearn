@@ -1,1 +1,1 @@
-# gp_kernlearn
+# `gp_kernlearn`: Gaussian Process Kernel Learning
