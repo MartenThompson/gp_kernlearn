@@ -14,43 +14,66 @@
 #leg2 <- 
 #leg3 <- 
 
-legendre_polynomials <- c(
-  function(x) {
+legendre_polynomials <- c( # 0 is identity
+  function(x) { # 1
     return(x)
   }, 
-  function(x) {
+  function(x) { # 2
     return(0.5*(3*x^2 -1))
   }, 
-  function(x) {
-    return(0.5(5*x^3 - 3*x))
+  function(x) { # 3
+    return(0.5*(5*x^3 - 3*x))
+  },
+  function(x) { # 4
+    return((1/8)*(35*x^4-30*x^2 + 3))
+  },
+  function(x) { # 5
+    return((1/8)*(63*x^5 - 70*x^3 +15*x))
   })
 
-make_legendre_design_matrix_1D <- function(degree, X_normalized) {
-  # X_normalized should have 1 column
-  if (3 < degree) {
-    stop('Only implemented up to degree 3.')
+
+# basis_maker()s should take one argument, X, and have everything else configured.
+
+make_legendre1D_basis_maker <- function(degree) {
+  if (5 < degree) {
+    stop('Only implemented up to degree 5.')
   }
   
-  n <- nrow(X_normalized)
-  x <- X_normalized[,1]
-  X_dm <- matrix(NA, nrow=n, ncol=degree)  
-  # Legendre 0
-  X_dm[,1] <- rep(1,n)
-  
-  for (deg in 1:degree) {
-    f <- legendre_polynomials[[deg]]
-    X_dm[,deg+1] <- f(x)
+  basis_maker <- function(X) {
+    p <- dim(X)[2]
+    if (1 != p) {
+      stop('X should be Nx1; is Nx', p)
+    }
+    
+    n <- nrow(X)
+    x <- X[,1]
+    X.basis <- matrix(NA, nrow=n, ncol=degree+1)  
+    # Legendre 0
+    X.basis[,1] <- rep(1,n)
+    
+    for (deg in 1:degree) {
+      f <- legendre_polynomials[[deg]]
+      #print(f)
+      X.basis[,deg+1] <- f(x)
+    }
+    
+    return(X.basis)
   }
   
-  return(X_dm)
+  return(basis_maker)
 }
+
 
 testing <- FALSE
 if(testing) {
   f <- legendre_polynomials[[1]]
   x <- seq(-1,1,length.out=10)
-  cat(all(x != f(x)))
+  cat(all(x == f(x)))
   
+  basis_maker <- make_legendre1D_basis_maker(4)
+  X.b <- basis_maker(matrix(x, ncol=1))
+  cat(dim(X.b)[1] ==10)
+  cat(dim(X.b)[2] ==5)
 }
 
 

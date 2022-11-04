@@ -17,8 +17,9 @@ kern <- function(B,V) {
 #### ABC FUNCTIONS ####
 #######################
 
+# TODO make a maker w/ p considered
 param_prior <- function() {
-  return(list(beta=rnorm(6,0,2)))
+  return(list(beta=rnorm(5,0,2)))
 }
 
 data_gen_maker <- function(X_dm) {
@@ -37,25 +38,25 @@ distance <- function(y, y_0) {
 #### ABC POSTERIOR APPROXIMATIONS ####
 ######################################
 
-files <- list.files('ms_eg/jan2022_bcc_files_trimmed/')
+#files <- list.files('ms_eg/jan2022_bcc_files_trimmed/')
 
-for (f in files) {
-  dat <- read_normalize_unit_square(f)
-  y_0 <- dat$Y
-  n <- length(y_0)
-  X_dm <- make_legendre_design_matrix(NA, dat$X) # this is really b(x)'s
-  data_gen <- data_gen_maker(X_dm)
-  garbage <- data_gen(NA, param_prior()) # just need to run this method once o/w lazy init bites us.
-  
-  M = 100
-  runtime <- 10
-  abc_output <- abc_knn_fixedrt(M, runtime, param_prior, data_gen, y_0, distance, n_cores=6, k=1, packages_load=c())
-  n_gen <- abc_output$n_gen
-  dataset_name <- strsplit(f, '.', fixed=TRUE)[[1]][1]
-  abc_output_name <- paste0('ms_eg/output/abc_output/', dataset_name,
-                            '_', runtime, 'min6_l2_M100n', n_gen, '.csv')
-  write.csv(abc_output$results, abc_output_name, row.names = FALSE)
-}
+#for (f in files) {
+#  dat <- read_normalize_unit_square(f)
+#  y_0 <- dat$Y
+#  n <- length(y_0)
+#  X_dm <- make_legendre_design_matrix(NA, dat$X) # this is really b(x)'s
+#  data_gen <- data_gen_maker(X_dm)
+#  garbage <- data_gen(NA, param_prior()) # just need to run this method once o/w lazy init bites us.
+#  
+#  M = 100
+#  runtime <- 10
+#  abc_output <- abc_knn_fixedrt(M, runtime, param_prior, data_gen, y_0, distance, n_cores=6, k=1, packages_load=c())
+#  n_gen <- abc_output$n_gen
+#  dataset_name <- strsplit(f, '.', fixed=TRUE)[[1]][1]
+#  abc_output_name <- paste0('ms_eg/output/abc_output/', dataset_name,
+#                            '_', runtime, 'min6_l2_M100n', n_gen, '.csv')
+#  write.csv(abc_output$results, abc_output_name, row.names = FALSE)
+#}
 
 
 
@@ -69,26 +70,26 @@ for (f in files) {
 #}
 #par(mfrow=c(1,1))
 
-for (f in files) {
-  dat <- read_normalize_unit_square(f)
-  temp.midpoint <- max(dat$X[,1]) - (max(dat$X[,1]) - min(dat$X[,1]))/2
-  train_on_lowT <- dat$X[,1] < temp.midpoint
-  
-  y_0 <- dat$Y[train_on_lowT]
-  n <- length(y_0)
-  X_dm <- make_legendre_design_matrix(NA, dat$X[train_on_lowT,]) # this is really b(x)'s
-  data_gen <- data_gen_maker(X_dm)
-  garbage <- data_gen(NA, param_prior()) # just need to run this method once o/w lazy init bites us.
-  
-  M = 100
-  runtime <- 10
-  abc_output <- abc_knn_fixedrt(M, runtime, param_prior, data_gen, y_0, distance, n_cores=6, k=1, packages_load=c())
-  n_gen <- abc_output$n_gen
-  dataset_name <- strsplit(f, '.', fixed=TRUE)[[1]][1]
-  abc_output_name <- paste0('ms_eg/output/abc_output/', dataset_name,
-                            'trainlowT_', runtime, 'min6_l2_M100n', n_gen, '.csv')
-  write.csv(abc_output$results, abc_output_name, row.names = FALSE)
-}
+# for (f in files) {
+#   dat <- read_normalize_unit_square(f)
+#   temp.midpoint <- max(dat$X[,1]) - (max(dat$X[,1]) - min(dat$X[,1]))/2
+#   train_on_lowT <- dat$X[,1] < temp.midpoint
+#   
+#   y_0 <- dat$Y[train_on_lowT]
+#   n <- length(y_0)
+#   X_dm <- make_legendre_design_matrix(NA, dat$X[train_on_lowT,]) # this is really b(x)'s
+#   data_gen <- data_gen_maker(X_dm)
+#   garbage <- data_gen(NA, param_prior()) # just need to run this method once o/w lazy init bites us.
+#   
+#   M = 100
+#   runtime <- 10
+#   abc_output <- abc_knn_fixedrt(M, runtime, param_prior, data_gen, y_0, distance, n_cores=6, k=1, packages_load=c())
+#   n_gen <- abc_output$n_gen
+#   dataset_name <- strsplit(f, '.', fixed=TRUE)[[1]][1]
+#   abc_output_name <- paste0('ms_eg/output/abc_output/', dataset_name,
+#                             'trainlowT_', runtime, 'min6_l2_M100n', n_gen, '.csv')
+#   write.csv(abc_output$results, abc_output_name, row.names = FALSE)
+# }
 
 
 
@@ -97,11 +98,11 @@ for (f in files) {
 ### MAKING THE KERNEL ####
 ##########################
 
-make_kern <- function (X.train, X.test, V.basis) {
+make_kern <- function (X.train, X.test, V.basis, basis_maker) {
   # n.test <- 30 # it will be this squared fyi  
   n <- nrow(X.train)
   X.trte <- rbind(X.train, X.test)
-  X.basis.trte <- make_legendre_design_matrix(NA, X.trte)
+  X.basis.trte <- basis_maker(X.trte)
   K.trte <- kern(X.basis.trte, V.basis)
   #image(K.trte)
   
@@ -119,9 +120,9 @@ make_kern <- function (X.train, X.test, V.basis) {
   ))
 }
 
-posterior_test_meanvar <- function(X.test, X.train, K.traininv, K.startr, K.star, E.basis, y.0) {
-  X.test.basis <- make_legendre_design_matrix(NULL, X.test)
-  X.train.basis <- make_legendre_design_matrix(NULL, X.train)
+posterior_test_meanvar <- function(X.test, X.train, K.traininv, K.startr, K.star, E.basis, y.0, basis_maker) {
+  X.test.basis <- basis_maker(X.test) # TODO
+  X.train.basis <- basis_maker(X.train)
   
   post.test.mean <- X.test.basis%*%E.basis + K.startr%*%K.traininv%*%(y.0 - X.train.basis%*%E.basis)
   post.test.var <- K.star - K.startr%*%K.traininv%*%t(K.startr)
@@ -183,15 +184,15 @@ make_predictions <-function(f, slug) {
 }
 
 
-itr <- 13
-output <- make_predictions(files[itr], 'trainlowT_10min6_l2_M100n')
-plot.data <- data.frame(
-  temp = c(output$preds$temp, output$preds$temp, output$obs$temp),
-  conc = c(output$preds$conc, output$preds$conc, output$obs$conc),
-  gibb = c(output$preds$pred, output$preds$y.true, output$obs$y.true),
-  obs_or_pred = c(rep('pred', nrow(output$preds)), rep('obs', nrow(output$preds)+nrow(output$obs)))
-)
+# itr <- 13
+# output <- make_predictions(files[itr], 'trainlowT_10min6_l2_M100n')
+# plot.data <- data.frame(
+#   temp = c(output$preds$temp, output$preds$temp, output$obs$temp),
+#   conc = c(output$preds$conc, output$preds$conc, output$obs$conc),
+#   gibb = c(output$preds$pred, output$preds$y.true, output$obs$y.true),
+#   obs_or_pred = c(rep('pred', nrow(output$preds)), rep('obs', nrow(output$preds)+nrow(output$obs)))
+# )
 
 
-plot_ly(x=plot.data$temp, y=plot.data$conc, z=plot.data$gibb, type="scatter3d", mode="markers",color=plot.data$obs_or_pred)
-paste0(strsplit(files[itr], '.', fixed=TRUE)[[1]][1],'trainlowT_10min6_l2_M100n')
+#plot_ly(x=plot.data$temp, y=plot.data$conc, z=plot.data$gibb, type="scatter3d", mode="markers",color=plot.data$obs_or_pred)
+#paste0(strsplit(files[itr], '.', fixed=TRUE)[[1]][1],'trainlowT_10min6_l2_M100n')
