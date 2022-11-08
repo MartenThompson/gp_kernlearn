@@ -18,8 +18,12 @@ kern <- function(B,V) {
 #######################
 
 # TODO make a maker w/ p considered
-param_prior <- function() {
-  return(list(beta=rnorm(5,0,2)))
+param_prior_maker <- function(basis.dim, sd=2) {
+  param_prior <- function() {
+    return(list(beta=rnorm(basis.dim,0,sd)))
+  }
+  
+  return(param_prior)
 }
 
 data_gen_maker <- function(X_dm) {
