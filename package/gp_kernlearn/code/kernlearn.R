@@ -124,16 +124,50 @@ make_kern <- function (X.train, X.test, V.basis, basis_maker) {
   ))
 }
 
-posterior_test_meanvar <- function(X.test, X.train, K.traininv, K.startr, K.star, E.basis, y.0, basis_maker) {
-  X.test.basis <- basis_maker(X.test) # TODO
+
+posterior_test_meanvar <- function(abc.samples, X.train, Y.train, X.test, basis_maker) {
+  V <- cov(as.matrix(abc.samples)) 
+  E <- apply(abc.samples, 2, mean) 
+  
+  kern.pieces <- make_kern(X.train, X.test, V, basis_maker)
+  K.traininv <- kern.pieces$K.traininv
+  K.startr <- kern.pieces$K.startr
+  K.star <- kern.pieces$K.star
+  
+  
+  X.test.basis <- basis_maker(X.test) 
   X.train.basis <- basis_maker(X.train)
   
-  post.test.mean <- X.test.basis%*%E.basis + K.startr%*%K.traininv%*%(y.0 - X.train.basis%*%E.basis)
+  post.test.mean <- X.test.basis%*%E + K.startr%*%K.traininv%*%(Y.train - X.train.basis%*%E)
   post.test.var <- K.star - K.startr%*%K.traininv%*%t(K.startr)
   
   return(list(
     post.test.mean = post.test.mean,
-    post.test.var = post.test.var
+    post.test.var = post.test.var,
+    kern.pieces = kern.pieces
+  ))
+}
+
+posterior_test_meanvar_br <- function(rstan_output, X.train, Y.train, X.test, basis_maker) {
+  E <- unname(rstan_output$coefficients)
+  V <- unname(rstan_output$covmat)
+  
+  kern.pieces <- make_kern(X.train, X.test, V, basis_maker)
+  K.traininv <- kern.pieces$K.traininv
+  K.startr <- kern.pieces$K.startr
+  K.star <- kern.pieces$K.star
+  
+  
+  X.test.basis <- basis_maker(X.test) 
+  X.train.basis <- basis_maker(X.train)
+  
+  post.test.mean <- X.test.basis%*%E + K.startr%*%K.traininv%*%(Y.train - X.train.basis%*%E)
+  post.test.var <- K.star - K.startr%*%K.traininv%*%t(K.startr)
+  
+  return(list(
+    post.test.mean = post.test.mean,
+    post.test.var = post.test.var,
+    kern.pieces = kern.pieces
   ))
 }
 
