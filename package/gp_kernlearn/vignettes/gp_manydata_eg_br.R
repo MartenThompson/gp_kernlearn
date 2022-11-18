@@ -119,3 +119,12 @@ for (i in 1:length(analysis.dirs)) {
 }
 plot(NA, NA, xlim=c(1,10), ylim=c(0,200), xlab='Legendre Degree', ylab='Frobenius |K - Kest|')
 lines(1:length(analysis.dirs), norms, lwd=2)
+
+
+
+
+plot(NA,NA, xlim=c(-5,5), ylim=c(-3,3), xlab='X', ylab='Y')
+lines(X, Y.history[[1]], lwd=2)
+lines(X, Y.history[[2]], lwd=2, col='red')
+lines(X, Y.history[[10]], lwd=2, col='blue')
+
