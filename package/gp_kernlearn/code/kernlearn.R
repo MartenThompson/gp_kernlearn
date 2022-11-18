@@ -171,6 +171,25 @@ posterior_test_meanvar_br <- function(rstan_output, X.train, Y.train, X.test, ba
   ))
 }
 
+posterior_test_meanvar_brev <- function(E, V, X.train, Y.train, X.test, basis_maker) {
+  kern.pieces <- make_kern(X.train, X.test, V, basis_maker)
+  K.traininv <- kern.pieces$K.traininv
+  K.startr <- kern.pieces$K.startr
+  K.star <- kern.pieces$K.star
+  
+  
+  X.test.basis <- basis_maker(X.test) 
+  X.train.basis <- basis_maker(X.train)
+  
+  post.test.mean <- X.test.basis%*%E + K.startr%*%K.traininv%*%(Y.train - X.train.basis%*%E)
+  post.test.var <- K.star - K.startr%*%K.traininv%*%t(K.startr)
+  
+  return(list(
+    post.test.mean = post.test.mean,
+    post.test.var = post.test.var,
+    kern.pieces = kern.pieces
+  ))
+}
 
 ####################
 ## USING ALL THIS ##
