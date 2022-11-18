@@ -29,14 +29,29 @@ legendre_polynomials <- c( # 0 is identity
   },
   function(x) { # 5
     return((1/8)*(63*x^5 - 70*x^3 +15*x))
+  },
+  function(x) { # 6
+    return((1/16)*(231*x^6 - 315*x^4 + 105*x^2 - 5))
+  },
+  function(x) { # 7 
+    return((1/16)*(429*x^7 - 693*x^5 + 315*x^3 - 35*x))
+  },
+  function(x) { # 8
+    return((1/128)*(6435*x^8 - 12012*x^6 + 6930*x^4 - 1260*x^2 + 35))
+  },
+  function(x) { # 9
+    return((1/128)*(12155*x^9 - 25740*x^7 + 18018*x^5 - 4620*x^3 + 315*x))
+  },
+  function(x) { # 10
+    return((1/256)*(46189*x^10 - 109395*x^8 + 90090*x^6 - 30030*x^4 + 3465*x^2 - 63))
   })
 
 
 # basis_maker()s should take one argument, X, and have everything else configured.
 
 make_legendre1D_basis_maker <- function(degree) {
-  if (5 < degree) {
-    stop('Only implemented up to degree 5.')
+  if (10 < degree) {
+    stop('Only implemented up to degree 10.')
   }
   
   basis_maker <- function(X) {
