@@ -145,7 +145,7 @@ png(paste0(save_slug, 'K_true.png'))
 image(K, main='K True')
 dev.off()
 
-leg.deg <- 8
+leg.deg <- 10
 leg_basis_maker <- make_legendre1D_basis_maker(degree=leg.deg)
 b.X <- leg_basis_maker(X)
 dir.create(file.path(paste0(save_slug, 'leg', leg.deg, '/')))
