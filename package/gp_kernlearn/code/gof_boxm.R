@@ -26,6 +26,20 @@ lin_kernel <- function(X, sigma.0, sigma.1, fuzz=0.1) {
   return(K)
 }
 
+quad_kernel <- function(X, sigma.0, sigma.1, sigma.2, fuzz=0.1) {
+  #K <- sigma.0 + sigma.1*X%*%t(X) + sigma.2*(X%*%t(X))%*%(X%*%t(X))
+  #K <- (sigma.0 + sigma.1*X%*%t(X))%*%(sigma.0 + sigma.2*X%*%t(X))
+  n <- dim(X)[1]
+  K <- matrix(NA, n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
+    }
+  }
+  diag(K) <- diag(K) + fuzz
+  return(K)
+}
+
 
 gen_dat_est_covs <- function(leg.deg, reps){
   leg_basis_maker <- make_legendre1D_basis_maker(degree=leg.deg)
@@ -120,18 +134,27 @@ boxM_stat <- function(K1, K2, reps, n.x) {
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-save_slug <- 'package/gp_kernlearn/code/output/gof_boxm/'
+save_slug <- 'package/gp_kernlearn/code/output/gof_boxm_quadkern/'
 dir.create(file.path(save_slug))
 
-
-N <- 10
+N <- 10         # number of x locations
 X <- matrix(seq(-5,5,length.out=N), nrow=N, ncol=1)
-K <- lin_kernel(X, 1, 1/25, 0.1)
+#K <- lin_kernel(X, 1, 1/25, 0.1)
+K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+
+# plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
+# for (r in 1:5) {
+#   err <- t(mvtnorm::rmvnorm(1, rep(0, N), K))
+#   mu <- rep(0, N)
+#   Y <- mu + err
+#   points(X, Y, pch=16, col=rgb(runif(1),runif(1),runif(1)))
+# }
+
 
 n.mat.samp <- 20 # e.g. n material samples
-n.analysis <- 1 # number of times to get box stat
+n.analysis <- 10 # number of times to get box stat
 
-leg.degs <- 1:2
+leg.degs <- 3
 
 stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(leg.degs))
 df.hist <- matrix(NA, nrow=n.analysis, ncol=length(leg.degs))
@@ -158,7 +181,7 @@ for (j in 1:length(leg.degs)) {
 }
 
 
-write.csv(stat.hist, paste0(save_slug, 'stat_hist_nmat',n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
-write.csv(df.hist, paste0(save_slug, 'df_hist_nmat',n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
-write.csv(pval.hist, paste0(save_slug, 'pval_hist_nmat',n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
+write.csv(stat.hist, paste0(save_slug, 'stat_hist_nx', N, '_nmat',n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
+write.csv(df.hist, paste0(save_slug, 'df_hist_nx', N, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
+write.csv(pval.hist, paste0(save_slug, 'pval_hist_nx', N, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
 
