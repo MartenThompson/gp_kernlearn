@@ -6,8 +6,20 @@
 # IDK how this applies to higher basis dimension, but...
 # Generate data according to GP(0, lin_kern).
 # We want to investigate behavior of Box's M stat as we compare 
-# deg1 = 0 to deg2 = 0,1,2,3,4,5.
+# deg1 = 1 to deg2 = 1,2,3,4,5.
+# If we fail to reject equality, there's no need to consider higher deg.
 
+# Results
+# For linear kernel data
+  # failed to reject deg1(1) == deg2(1); barel rej d1(1) == d2(2); rej d1(1) == d2(3). So 1 is slightly diff than 2, v diff than 3.   
+  # not rej d1(2) == d2(2); barely rej d1(2)==d2(3); rej d1(2)==d2(4).
+# For quad kernel data
+  # failed to reject deg1(1) == deg2(1); rejected deg1(1) == deg2(2, 3, 4, 5). So 1 is different than 2,3,4,5. 
+  # failed to reject deg1(2) == deg2(2); barely rej d1(2)==d2(3); rej d1(2)==d2(4). Maybe something here?
+
+# Not satisfactory. What we want to see is:
+# For linear data: 1 not that different than 2,3 so don't bother.
+# For quad data: 1 different than 2; 2 not that diff than 3, 4 so go with 2.
 
 setwd('~/Git/gp_kernlearn/')
 library(rstanarm)
@@ -40,77 +52,87 @@ quad_kernel <- function(X, sigma.0, sigma.1, sigma.2, fuzz=0.1) {
   return(K)
 }
 
+cubic_kernel <- function(X, sigma.0, sigma.1, sigma.2, sigma.3, fuzz=0.1) {
+  n <- dim(X)[1]
+  K <- matrix(NA, n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + 
+        sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,]) +
+        sigma.3*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
+    }
+  }
+  diag(K) <- diag(K) + fuzz
+  return(K)
+}
 
-gen_dat_est_covs <- function(leg.deg, reps){
-  leg_basis_maker <- make_legendre1D_basis_maker(degree=leg.deg)
-  b.X <- leg_basis_maker(X)
+
+gen_dat_est_covs <- function(pri.deg, alt.deg, N, K, reps){
+  leg_basis_maker_pri <- make_legendre1D_basis_maker(degree = pri.deg)
+  b.X.pri <- leg_basis_maker_pri(X)
   
-  leg_basis_maker_deg1 <- make_legendre1D_basis_maker(degree = 1)
-  b1.X <- leg_basis_maker_deg1(X)
+  leg_basis_maker_alt <- make_legendre1D_basis_maker(degree=alt.deg)
+  b.X.alt <- leg_basis_maker_alt(X)
   
-  beta.samples.deg1 <- NA
-  beta.samples.deg.alt <- NA
+  beta.manysamples.pri <- NA
+  beta.manysamples.alt <- NA
   Y.history <- list()
   err.history <- list()
-
+  
   for (r in 1:reps) {
-    #cat('Replication', r, '\n')
     err <- t(mvtnorm::rmvnorm(1, rep(0, N), K))
     mu <- rep(0, N)
     Y <- mu + err
     Y.history[[r]] <- Y
     err.history[[r]] <- err
     
-    silent <- capture.output(br.output <- stan_glm(Y ~ b.X[,2:(leg.deg+1)], family=gaussian()))
-    beta.samples <- matrix(unlist(br.output$stanfit@sim$samples[[1]][[1]]), ncol=1)
-    for (i in 2:(leg.deg+1)) {
-      new <- matrix(unlist(br.output$stanfit@sim$samples[[1]][[i]]), ncol=1)
-      beta.samples <- cbind(beta.samples, new)
+    silent <- capture.output(br.out.pri <- stan_glm(Y ~ b.X.pri[,2:(pri.deg+1)], family=gaussian()))
+    beta.samples.pri <- matrix(unlist(br.out.pri$stanfit@sim$samples[[1]][[1]]), ncol=1)
+    for (i in 2:(pri.deg+1)) {
+      new <- matrix(unlist(br.out.pri$stanfit@sim$samples[[1]][[i]]), ncol=1)
+      beta.samples.pri <- cbind(beta.samples.pri, new)
     }
     
-    silent <- capture.output(br1.output <- stan_glm(Y ~ b1.X[,2], family = gaussian()))
-    beta1.samples <-  matrix(unlist(br1.output$stanfit@sim$samples[[1]][[1]]), ncol=1)
-    new <- matrix(unlist(br1.output$stanfit@sim$samples[[1]][[2]]), ncol=1)
-    beta1.samples <- cbind(beta1.samples, new)
+    silent <- capture.output(br.out.alt <- stan_glm(Y ~ b.X.alt[,2:(alt.deg+1)], family=gaussian()))
+    beta.samples.alt <- matrix(unlist(br.out.alt$stanfit@sim$samples[[1]][[1]]), ncol=1)
+    for (i in 2:(alt.deg+1)) {
+      new <- matrix(unlist(br.out.alt$stanfit@sim$samples[[1]][[i]]), ncol=1)
+      beta.samples.alt <- cbind(beta.samples.alt, new)
+    }
     
     if (1==r) {
-      beta.samples.deg.alt <- beta.samples
-      beta.samples.deg1 <- beta1.samples
+      beta.manysamples.pri <- beta.samples.pri
+      beta.manysamples.alt <- beta.samples.alt
     } else {
-      beta.samples.deg.alt <- rbind(beta.samples.deg.alt, beta.samples)
-      beta.samples.deg1 <- rbind(beta.samples.deg1, beta1.samples)
+      beta.manysamples.pri <- rbind(beta.manysamples.pri, beta.samples.pri)
+      beta.manysamples.alt <- rbind(beta.manysamples.alt, beta.samples.alt)
     }
   }
   
-  #saveRDS(Y.history, paste0(save_slug, 'leg', leg.deg, '/Yhist.RData'))
-  #saveRDS(err.history, paste0(save_slug, 'leg', leg.deg, '/errhist.RData'))
-  #saveRDS(beta.samples.many, paste0(save_slug, 'leg', leg.deg, '/betasamples.RData'))
-  
-  E <- apply(beta.samples.deg.alt, 2, mean)
-  V <- cov(beta.samples.deg.alt)
-  #saveRDS(E, paste0(save_slug, 'leg', leg.deg, '/E.RData'))
-  #saveRDS(V, paste0(save_slug, 'leg', leg.deg, '/V.RData'))
+  E.pri <- apply(beta.manysamples.pri, 2, mean)
+  V.pri <- cov(beta.manysamples.pri)
   
   X.test <- matrix(seq(-5,5,length.out=20), ncol=1)
-  post.ests <- posterior_test_meanvar_brev(E, V, X, Y.history[[3]], X.test, leg_basis_maker)
-  K.hat <- post.ests$kern.pieces$K.train
+  post.ests.pri <- posterior_test_meanvar_brev(E.pri, V.pri, X, Y.history[[3]], X.test, leg_basis_maker_pri)
+  K.hat.pri <- post.ests.pri$kern.pieces$K.train
   
-  E.deg1 <- apply(beta.samples.deg1, 2, mean)
-  V.deg1 <- cov(beta.samples.deg1)
-  post.ests.deg1 <- posterior_test_meanvar_brev(E.deg1, V.deg1, X, Y.history[[3]], X.test, leg_basis_maker_deg1)
-  K.hat.deg1 <- post.ests.deg1$kern.pieces$K.train
-  
+  E.alt <- apply(beta.manysamples.alt, 2, mean)
+  V.alt <- cov(beta.manysamples.alt)
+  post.ests.alt <- posterior_test_meanvar_brev(E.alt, V.alt, X, Y.history[[3]], X.test, leg_basis_maker_alt)
+  K.hat.alt <- post.ests.alt$kern.pieces$K.train
+  # image(K.hat.alt)
   
   return(list(
-    K1 = K.hat,
-    K2 = K.hat.deg1
+    K1 = K.hat.pri,
+    K2 = K.hat.alt
   ))
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Box's M Test ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+# https://www.real-statistics.com/multivariate-statistics/boxs-test/boxs-test-basic-concepts/
+# https://rdrr.io/cran/rstatix/src/R/box_m.R
 # reps: n_j
 # n.x : k
 boxM_stat <- function(K1, K2, reps, n.x) {
@@ -134,45 +156,48 @@ boxM_stat <- function(K1, K2, reps, n.x) {
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-save_slug <- 'package/gp_kernlearn/code/output/gof_boxm_quadkern/'
+save_slug <- 'package/gp_kernlearn/code/output/gof_boxm_cubickern/'
 dir.create(file.path(save_slug))
 
-N <- 10         # number of x locations
-X <- matrix(seq(-5,5,length.out=N), nrow=N, ncol=1)
+N.x <- 10         # number of x locations
+X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
-K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
 
 # plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
 # for (r in 1:5) {
-#   err <- t(mvtnorm::rmvnorm(1, rep(0, N), K))
-#   mu <- rep(0, N)
+#   err <- t(mvtnorm::rmvnorm(1, rep(0, N.x), K))
+#   mu <- rep(0, N.x)
 #   Y <- mu + err
 #   points(X, Y, pch=16, col=rgb(runif(1),runif(1),runif(1)))
 # }
 
 
 n.mat.samp <- 20 # e.g. n material samples
-n.analysis <- 10 # number of times to get box stat
+n.analysis <- 2 # number of times to get box stat
 
-leg.degs <- 3
+primary.degree <- 4
+alternative.degs <- 4:5#:5
 
-stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(leg.degs))
-df.hist <- matrix(NA, nrow=n.analysis, ncol=length(leg.degs))
-pval.hist <- matrix(NA, nrow=n.analysis, ncol=length(leg.degs))
+stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
+df.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
+pval.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
 
-colnames(stat.hist) <- paste0(rep('deg', length(leg.degs)), leg.degs)
-colnames(pval.hist) <- paste0(rep('deg', length(leg.degs)), leg.degs)
-colnames(df.hist) <- paste0(rep('deg', length(leg.degs)), leg.degs)
+cn <- paste0(rep('deg', length(alternative.degs)), alternative.degs)
+colnames(stat.hist) <- cn
+colnames(pval.hist) <- cn
+colnames(df.hist) <- cn
 
 set.seed(2022)
-for (j in 1:length(leg.degs)) {
-  leg.deg <- leg.degs[j]
-  cat('\nLeg Deg', leg.deg, '\n')
+for (j in 1:length(alternative.degs)) {
+  alt.deg <- alternative.degs[j]
+  cat('\nAlt Deg', alt.deg, '\n')
   
   for (i in 1:n.analysis) {
     cat(i)
-    K.ests <- gen_dat_est_covs(leg.deg, n.mat.samp)
-    boxM.out <- boxM_stat(K.ests$K1, K.ests$K2, n.mat.samp, N)
+    K.ests <- gen_dat_est_covs(primary.degree, alt.deg, N.x, K, n.mat.samp)
+    boxM.out <- boxM_stat(K.ests$K1, K.ests$K2, n.mat.samp, N.x)
     
     stat.hist[i,j] <- boxM.out$stat
     df.hist[i,j] <- boxM.out$df
@@ -181,7 +206,7 @@ for (j in 1:length(leg.degs)) {
 }
 
 
-write.csv(stat.hist, paste0(save_slug, 'stat_hist_nx', N, '_nmat',n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
-write.csv(df.hist, paste0(save_slug, 'df_hist_nx', N, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
-write.csv(pval.hist, paste0(save_slug, 'pval_hist_nx', N, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
+write.csv(stat.hist, paste0(save_slug, 'stat_hist_prim', primary.degree, '_nx', N.x, '_nmat',n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
+write.csv(df.hist, paste0(save_slug, 'df_hist_prim', primary.degree, '_nx', N.x, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
+write.csv(pval.hist, paste0(save_slug, 'pval_hist_prim', primary.degree, '_nx', N.x, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
 
