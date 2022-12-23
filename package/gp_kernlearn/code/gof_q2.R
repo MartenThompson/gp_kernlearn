@@ -168,14 +168,14 @@ Q2_stat <- function(K1, K2, N1, N2, m) {
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-save_slug <- 'package/gp_kernlearn/code/output/gof_q2_cubickern/'
+save_slug <- 'package/gp_kernlearn/code/output/gof_q2_quadkern/'
 dir.create(file.path(save_slug))
 
 N.x <- 10         # number of x locations
 X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
-#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
-K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
+K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
 
 # plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
 # for (r in 1:5) {
@@ -186,11 +186,11 @@ K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
 # }
 
 
-n.mat.samp <- 20 # e.g. n material samples
+n.mat.samp <- 320 # e.g. n material samples
 n.analysis <- 2 # number of times to get stat
 
-primary.degree <- 4
-alternative.degs <- 4:5
+primary.degree <- 1
+alternative.degs <- 1:2
 
 stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
 pval.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
