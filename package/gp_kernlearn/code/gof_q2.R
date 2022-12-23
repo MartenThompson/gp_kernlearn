@@ -48,6 +48,21 @@ quad_kernel <- function(X, sigma.0, sigma.1, sigma.2, fuzz=0.1) {
   return(K)
 }
 
+cubic_kernel <- function(X, sigma.0, sigma.1, sigma.2, sigma.3, fuzz=0.1) {
+  n <- dim(X)[1]
+  K <- matrix(NA, n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + 
+        sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,]) +
+        sigma.3*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
+    }
+  }
+  diag(K) <- diag(K) + fuzz
+  return(K)
+}
+
+
 
 gen_dat_est_covs <- function(pri.deg, alt.deg, N, K, reps){
   leg_basis_maker_pri <- make_legendre1D_basis_maker(degree = pri.deg)
@@ -153,13 +168,14 @@ Q2_stat <- function(K1, K2, N1, N2, m) {
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-save_slug <- 'package/gp_kernlearn/code/output/gof_q2_quadkern/'
+save_slug <- 'package/gp_kernlearn/code/output/gof_q2_cubickern/'
 dir.create(file.path(save_slug))
 
 N.x <- 10         # number of x locations
 X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
-K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
 
 # plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
 # for (r in 1:5) {
@@ -173,8 +189,8 @@ K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
 n.mat.samp <- 20 # e.g. n material samples
 n.analysis <- 2 # number of times to get stat
 
-primary.degree <- 2
-alternative.degs <- 1:3#:5
+primary.degree <- 4
+alternative.degs <- 4:5
 
 stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
 pval.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
