@@ -137,8 +137,8 @@ gen_dat_est_covs <- function(pri.deg, alt.deg, N, K, reps){
 # n.x : k
 boxM_stat <- function(K1, K2, reps, n.x) {
   n <- 2*reps
-  S.pooled = (1/(n-2))*(((reps-1)*K1) + ((reps-2)*K2))  
-  M = (n-2)*log(det(S.pooled)) - (reps-1)*log(det(K1)) - (reps-1)*log(det(K2))
+  S.pooled = (1/(n-2))*(((reps-1)*K1) + ((reps-1)*K2))  
+  M = (n-2)*det(S.pooled, log=TRUE) - (reps-1)*det(K1, log=TRUE) - (reps-1)*det(K2, log=TRUE)
   c = ((2*n.x^2 + 3*n.x -1)/(6*(n.x+1)))*((2/(reps-1)) - (1/(n-2)))
   stat = M*(1-c)
   df = 0.5*n.x*(n.x+1)
@@ -156,14 +156,14 @@ boxM_stat <- function(K1, K2, reps, n.x) {
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-save_slug <- 'package/gp_kernlearn/code/output/gof_boxm_cubickern/'
+save_slug <- 'package/gp_kernlearn/code/output/gof_boxm_quadkern/'
 dir.create(file.path(save_slug))
 
-N.x <- 10         # number of x locations
+N.x <- 100         # number of x locations
 X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
-#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
-K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
+K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
 
 # plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
 # for (r in 1:5) {
@@ -174,11 +174,11 @@ K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
 # }
 
 
-n.mat.samp <- 20 # e.g. n material samples
-n.analysis <- 2 # number of times to get box stat
+n.mat.samp <- 320 # e.g. n material samples
+n.analysis <- 1 # number of times to get box stat
 
-primary.degree <- 4
-alternative.degs <- 4:5#:5
+primary.degree <- 1
+alternative.degs <- 2:2
 
 stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
 df.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
