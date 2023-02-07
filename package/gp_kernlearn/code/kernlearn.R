@@ -192,8 +192,94 @@ posterior_test_meanvar_brev <- function(E, V, X.train, Y.train, X.test, basis_ma
 }
 
 ####################
+##  TOY KERNELS  ##
+####################
+# assumes 0 centered X
+lin_kernel <- function(X, sigma.0, sigma.1, fuzz=0.1) {
+  K <- sigma.0 + sigma.1*X%*%t(X)
+  diag(K) <- diag(K) + fuzz
+  return(K)
+}
+
+quad_kernel <- function(X, sigma.0, sigma.1, sigma.2, fuzz=0.1) {
+  #K <- sigma.0 + sigma.1*X%*%t(X) + sigma.2*(X%*%t(X))%*%(X%*%t(X))
+  #K <- (sigma.0 + sigma.1*X%*%t(X))%*%(sigma.0 + sigma.2*X%*%t(X))
+  n <- dim(X)[1]
+  K <- matrix(NA, n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
+    }
+  }
+  diag(K) <- diag(K) + fuzz
+  return(K)
+}
+
+cubic_kernel <- function(X, sigma.0, sigma.1, sigma.2, sigma.3, fuzz=0.1) {
+  n <- dim(X)[1]
+  K <- matrix(NA, n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + 
+        sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,]) +
+        sigma.3*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
+    }
+  }
+  diag(K) <- diag(K) + fuzz
+  return(K)
+}
+
+####################
 ## USING ALL THIS ##
 ####################
+library(rstanarm)
+
+fit_kernlearn <- function(b.X, basis_maker, Y.list) {
+  degree <- dim(b.X)[2]-1
+  beta.manysamples.pri <- NA
+  beta.manysamples.alt <- NA
+  n.train.data <- length(Y.list)
+  
+  for (r in 1:n.train.data) {
+    Y <- Y.list[[r]]
+    
+    silent <- capture.output(br.out <- stan_glm(Y ~ b.X[,2:(degree+1)], family=gaussian()))
+    beta.samples <- matrix(unlist(br.out$stanfit@sim$samples[[1]][[1]]), ncol=1)
+    for (i in 2:(degree+1)) {
+      new <- matrix(unlist(br.out$stanfit@sim$samples[[1]][[i]]), ncol=1)
+      beta.samples <- cbind(beta.samples, new)
+    }
+    
+    if (1==r) {
+      beta.manysamples <- beta.samples
+    } else {
+      beta.manysamples <- rbind(beta.manysamples, beta.samples)
+    }
+  }
+  
+  E <- apply(beta.manysamples, 2, mean)
+  V <- cov(beta.manysamples)
+  
+  X.test <- matrix(seq(-5,5,length.out=20), ncol=1)
+  post.ests <- posterior_test_meanvar_brev(E, V, X, Y.list[[1]], X.test, basis_maker)
+  K.hat <- post.ests$kern.pieces$K.train
+  
+  # # 1D only!
+  # model <- function(x) {
+  #   x <- matrix(x, ncol=1)
+  #   post.ests <- posterior_test_meanvar_brev(E, V, X, Y.list[[1]], X, basis_maker)
+  # return mean like function? unclear what y should be then.
+  # }
+  
+  return(list(
+    K.est = K.hat,
+    stan.output =br.out,
+    Y.train = Y.list,
+    b.X.train = b.X,
+    basis_maker = basis_maker
+  ))
+}
+
 
 make_predictions <-function(f, slug) {
   cat(f, '\n')
