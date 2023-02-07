@@ -229,6 +229,11 @@ cubic_kernel <- function(X, sigma.0, sigma.1, sigma.2, sigma.3, fuzz=0.1) {
   return(K)
 }
 
+rbf_kernel <- function(X, alpha.0, alpha.1) {
+  K <- alpha.0*exp(-(1/alpha.1)*as.matrix(dist(X, diag=TRUE, upper=TRUE))^2)
+  return(K)
+}
+
 ####################
 ## USING ALL THIS ##
 ####################

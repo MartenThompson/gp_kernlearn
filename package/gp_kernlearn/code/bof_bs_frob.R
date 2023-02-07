@@ -13,13 +13,14 @@ dir.create(file.path(paste0(save_slug, '/models')))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Training Data Generation ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+set.seed(2023)
 N.x <- 100         # number of x locations
 X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
 #K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
-K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
-gen.name <- 'cubic'
+#K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
+K <- rbf_kernel(X, 5, 10)
+gen.name <- 'rbf5-10'
 n.train.datasets <- 20
 
 Y.train <- list()
@@ -30,6 +31,7 @@ for (r in 1:n.train.datasets) {
   Y.train[[r]] <- Y
 }
 
+plot(Y)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
