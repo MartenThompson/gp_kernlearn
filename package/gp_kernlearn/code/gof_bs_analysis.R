@@ -34,7 +34,7 @@ plot(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-model.name <- NA #'model_Ycubic_tr100_legd4'
+model.name <- 'model_Yrbf5-10_tr100_legd4'
 saved.model.path <- paste0(save_slug, 'models/', model.name, '.RData')
 
 # Either fit a model or load  a saved one.
@@ -78,10 +78,10 @@ image(model$K.true)
 image(model$K.est)
 
 set.seed(2023)
-norm.name <- 'spectral_cov/'    # UPDATE 1/3
-training.sumstat <- spectral_norm_cov(obs.mat) # UPDATE 2/3
+norm.name <- 'frob_cov/'    # UPDATE 1/3
+training.sumstat <- frob_norm_cov(obs.mat) # UPDATE 2/3
 n.boot <- 2e2
-boot.sumstats <- bootstrap_stat_dist(spectral_norm_cov, model_data_gen, n.boot) # UPDATE 3/3
+boot.sumstats <- bootstrap_stat_dist(frob_norm_cov, model_data_gen, n.boot) # UPDATE 3/3
 
 bs.output.path <- saved.model.path <- paste0(save_slug, norm.name, model.name)
 
