@@ -21,7 +21,6 @@ setwd('~/Git/gp_kernlearn/')
 library(rstanarm)
 source('package/gp_kernlearn/code/basis_orthog_poly.R')
 source('package/gp_kernlearn/code/kernlearn.R')
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Kern Learn Loop ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,14 +167,15 @@ Q2_stat <- function(K1, K2, N1, N2, m) {
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-save_slug <- 'package/gp_kernlearn/code/output/gof_q2_quadkern/'
+save_slug <- 'package/gp_kernlearn/code/output/gof_q2_rbfkern/'
 dir.create(file.path(save_slug))
 
 N.x <- 100         # number of x locations
 X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
-K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
 #K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
+K <- rbf_kernel(X, 5, 10)
 
 # plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
 # for (r in 1:5) {
@@ -186,11 +186,11 @@ K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
 # }
 
 
-n.mat.samp <- 320 # e.g. n material samples
+n.mat.samp <- 80 # e.g. n material samples
 n.analysis <- 1 # number of times to get stat
 
-primary.degree <- 2
-alternative.degs <- 1:3
+primary.degree <- 5
+alternative.degs <- 4:6
 
 stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
 pval.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))

@@ -34,7 +34,7 @@ plot(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-model.name <- 'model_Yrbf5-10_tr100_legd1'
+model.name <- 'model_Ycubic_tr100_legd2'
 saved.model.path <- paste0(save_slug, 'models/', model.name, '.RData')
 
 # Either fit a model or load  a saved one.
