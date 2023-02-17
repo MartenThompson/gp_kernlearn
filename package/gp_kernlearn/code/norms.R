@@ -21,3 +21,9 @@ infinity_norm_cov <- function(mat) {
 spectral_norm_cov <- function(mat) {
   return(norm(cov(mat), type='2'))
 }
+
+eigenvals_cov <- function(mat) {
+  e.out <- eigen(cov(mat), symmetric = TRUE, only.values = TRUE)
+  return(e.out$values)
+}
+

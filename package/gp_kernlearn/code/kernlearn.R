@@ -281,7 +281,9 @@ fit_kernlearn <- function(b.X, basis_maker, Y.list) {
     stan.output =br.out,
     Y.train = Y.list,
     b.X.train = b.X,
-    basis_maker = basis_maker
+    basis_maker = basis_maker,
+    E.est=E,
+    V.est=V
   ))
 }
 

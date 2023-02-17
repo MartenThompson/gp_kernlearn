@@ -11,10 +11,20 @@
 #temp <- legendre.polynomials(3, normalized = TRUE)
 
 
-#leg2 <- 
-#leg3 <- 
+monomials <- c(
+  function(x) {x}, # 1
+  function(x) {x^2}, # 2
+  function(x) {x^3}, # 3
+  function(x) {x^4}, # 4
+  function(x) {x^5}, # 5
+  function(x) {x^6}, # 6
+  function(x) {x^7}, # 7
+  function(x) {x^8}, # 8
+  function(x) {x^9}, # 9
+  function(x) {x^10} # 10
+)
 
-legendre_polynomials <- c( # 0 is identity
+legendre_polynomials <- c( # 0 is 1
   function(x) { # 1
     return(x)
   }, 
@@ -104,14 +114,6 @@ make_legendre_design_matrix_2D <- function(degree, X_normalized) {
   conc <- X_normalized[,2]
   X_dm <- matrix(NA, nrow=n, ncol=p)  
   # Legendre 0
-  X_dm[,1] <- rep(1,n)
-  # Legendre 1
-  X_dm[,2] <- leg1(temp)
-  X_dm[,3] <- leg1(conc)
-  # Legendre 2
-  X_dm[,4] <- leg1(temp)*leg1(conc)
-  X_dm[,5] <- leg2(temp)
-  X_dm[,6] <- leg2(conc)
   
   return(X_dm)
 }

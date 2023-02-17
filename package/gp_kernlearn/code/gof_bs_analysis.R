@@ -15,10 +15,10 @@ set.seed(2023)
 N.x <- 100         # number of x locations
 X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1/25, 0.1)
-K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
 #K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
-#K <- rbf_kernel(X, 5, 10)
-gen.name <- 'quad'
+K <- rbf_kernel(X, 5, 10)
+gen.name <- 'rbf5-10'
 n.train.datasets <- 100 # this actually needs to be 1e3 before cov(Y.train) looks like K
 
 Y.train <- list()
@@ -34,12 +34,12 @@ plot(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-model.name <- 'model_Ycubic_tr100_legd2'
+model.name <- 'model_Yrbf5-10_tr100_legd5'
 saved.model.path <- paste0(save_slug, 'models/', model.name, '.RData')
 
 # Either fit a model or load  a saved one.
 if (is.na(model.name)) {
-  deg <- 1
+  deg <- 5
   leg_basis_maker <- make_legendre1D_basis_maker(degree = deg)
   b.X <- leg_basis_maker(X)
   model <- fit_kernlearn(b.X, leg_basis_maker, Y.train)
@@ -58,7 +58,7 @@ if (is.na(model.name)) {
 }
 
 
-plot(model_data_gen_single())
+#plot(model_data_gen_single())
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Bootstrapping ####
@@ -76,19 +76,28 @@ obs.cov.mat <- cov(obs.mat)
 image(obs.cov.mat)
 image(model$K.true)
 image(model$K.est)
+image(model$V.est)
 
 set.seed(2023)
-norm.name <- 'spectral_cov/'    # UPDATE 1/3
-training.sumstat <- spectral_norm_cov(obs.mat) # UPDATE 2/3
+norm.name <- 'eigenvals_cov/'    # UPDATE 1/3
+training.sumstat <- eigenvals_cov(obs.mat) # UPDATE 2/3
 n.boot <- 2e2
-boot.sumstats <- bootstrap_stat_dist(spectral_norm_cov, model_data_gen, n.boot) # UPDATE 3/3
+boot.sumstats <- bootstrap_stat_dist(eigenvals_cov, model_data_gen, n.boot) # UPDATE 3/3
 
-bs.output.path <- saved.model.path <- paste0(save_slug, norm.name, model.name)
+bs.output.path <- paste0(save_slug, norm.name, model.name)
 
-png(paste0(bs.output.path, '_bs', n.boot,'dens.png'), height=6, width=6, units='in', res = 100)
-plot(density(boot.sumstats), xlim=c(0, max(boot.sumstats, training.sumstat)))
-points(training.sumstat, rep(0, length(training.sumstat)), col='red', pch=16)
-dev.off()
+#png(paste0(bs.output.path, '_bs', n.boot,'dens.png'), height=6, width=6, units='in', res = 100)
+stat.dim <- 50
+plot(density(boot.sumstats[,stat.dim]), xlim=c(0, max(boot.sumstats[,stat.dim], training.sumstat[stat.dim])))
+points(training.sumstat[stat.dim], c(0), col='red', pch=16)
+#dev.off()
+
+
+plot(log(ts(eigen(model$K.true)$values[1:stat.dim])), col='green', 
+     ylim=log(c(min(training.sumstat[1:stat.dim], apply(boot.sumstats[,1:stat.dim], 2, mean)),
+            max(training.sumstat[1:stat.dim], apply(boot.sumstats[,1:stat.dim], 2, mean)))))
+lines(log(ts(training.sumstat[1:stat.dim])), col='blue')
+lines(log(ts(apply(boot.sumstats[,1:stat.dim], 2, mean))), col='magenta')
 
 bs.savepath <- paste0(bs.output.path, '_bs', n.boot,'.RData')
 saveRDS(list(training.sumstat=training.sumstat,
