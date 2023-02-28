@@ -34,7 +34,7 @@ plot(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-model.name <- 'model_Yrbf5-005-fz01_tr100_legd10'
+model.name <- 'model_Yrbf5-05-fz01_tr100_legd10'
 saved.model.path <- paste0(save_slug, 'models/', model.name, '.RData')
 
 # Either fit a model or load  a saved one.
@@ -91,6 +91,9 @@ bs.output.path <- paste0(save_slug, norm.name, model.name)
 #points(training.sumstat[stat.dim], c(0), col='red', pch=16)
 #dev.off()
 
+#dat.in <- readRDS('package/gp_kernlearn/code/output/gof_bs/eigenvals_cov/model_Ycubic_tr100_legd1_bs200.RData')
+#training.sumstat <- dat.in$training.sumstat
+#boot.sumstats <- dat.in$boot.sumstats
 
 stat.dim <- 40
 png(paste0(bs.output.path, '_bs', n.boot, '_eigenmatch', stat.dim, '.png'), height=6, width=6, units='in', res=100)
@@ -101,8 +104,12 @@ plot(log(ts(eigen(model$K.true)$values[1:stat.dim])), col='green',
      xlab='Eigenvalue Order', ylab='log(Eigenvalue)', 
      main=model.name)
 lines(log(ts(training.sumstat[1:stat.dim])), col='blue', lwd=2)
-lines(log(ts(apply(boot.sumstats[,1:stat.dim], 2, mean))), col='magenta', lwd=2)
-legend(25, 4, c('True', 'Obs', 'Mean Boot'), c('green', 'blue', 'magenta'))
+boot.means <- apply(boot.sumstats[,1:stat.dim], 2, mean)
+boot.sds <- apply(boot.sumstats[,1:stat.dim], 2, sd)
+lines(log(ts(boot.means)), col='magenta', lwd=2)
+polygon(c(1:stat.dim, rev(1:stat.dim)), c(log(boot.means + 2*boot.sds), rev(log(boot.means-2*boot.sds))),
+        col=rgb(1,0,1,0.25), border=NA)
+legend('topright', c('True', 'Obs', 'Mean Boot'), col=c('green', 'blue', 'magenta'), lty=1, lwd=3)
 dev.off()
 
 bs.savepath <- paste0(bs.output.path, '_bs', n.boot,'.RData')
