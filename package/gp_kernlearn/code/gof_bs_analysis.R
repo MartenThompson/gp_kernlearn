@@ -14,11 +14,11 @@ dir.create(file.path(paste0(save_slug, 'models')))
 set.seed(2023)
 N.x <- 100         # number of x locations
 X <- matrix(seq(-1,1,length.out=N.x), nrow=N.x, ncol=1)
-#K <- lin_kernel(X, 1, 1/25, 0.1)
-#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+#K <- lin_kernel(X, 1, 1, 0.1)
+K <- quad_kernel(X, 1, 1, 1, 0.1)
 #K <- cubic_kernel(X, 1, 1, 1, 1, 0.1)
-K <- rbf_kernel(X, 5, 0.05, 0.1)
-gen.name <- 'rbf5-005-fz01'
+#K <- rbf_kernel(X, 5, 0.5, 0.1) 
+gen.name <- 'quad1-1-1' # 'rbf5-05-fz01'
 n.train.datasets <- 100 # this actually needs to be 1e3 before cov(Y.train) looks like K
 
 Y.train <- list()
@@ -34,7 +34,7 @@ plot(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-model.name <- 'model_Yrbf5-05-fz01_tr100_legd10'
+model.name <- NA #'model_Yrbf5-05-fz01_tr100_legd10'
 saved.model.path <- paste0(save_slug, 'models/', model.name, '.RData')
 
 # Either fit a model or load  a saved one.
