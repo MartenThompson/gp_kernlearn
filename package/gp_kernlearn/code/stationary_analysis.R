@@ -26,7 +26,7 @@ points(s.out.lm$D, model$K.true[upper.tri(model$K.true, diag=TRUE)], pch=16, col
 points(s.out.lm$D, s.out.lm$modpred, pch=16, col='red')
 points(s.out.p3$D, s.out.p3$modpred, pch=16, col='orange')
 points(s.out.mon3$D, s.out.mon3$modpred, pch=16, col='magenta')
-legend('topright', c('Dist(K hat)', 'Linear', 'Poly 3', 'Mono 3'), 
+legend('topright', c('Dist(K hat)', 'True', 'Linear', 'Poly 3', 'Mono 3'), 
        col=c('grey', 'green', 'red', 'orange', 'magenta'), pch = 16)
 
 
