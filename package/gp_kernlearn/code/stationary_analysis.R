@@ -25,14 +25,15 @@ s.out.lm <- make_stationary(K.corr, X, dist_euc, modfit_lm)
 s.out.p3 <- make_stationary(K.corr, X, dist_euc, modfit_lm3)
 s.out.mon3 <- make_stationary(K.corr, X, dist_euc, modfit_monopoly_maker(3))
 
-plot(s.out.lm$D, s.out.lm$modtrain, col='black', cex=0.1, ylab='Correlation', xlab='Distance')
+png(paste0(save_slug, 'rbf505data_statfits.png'), height=6, width=6, units='in', res = 100)
+plot(s.out.lm$D, s.out.lm$modtrain, col='dark gray', cex=0.1, ylab='Correlation', xlab='Distance')
 lines(s.out.lm$D[4951:5050], model$K.true[100,]/max(model$K.true), pch=16, col='green', lwd=3)
 lines(s.out.lm$D[4951:5050], s.out.lm$K.stationary[100,], col='red', lwd=3)
 lines(s.out.p3$D[4951:5050], s.out.p3$K.stationary[100,], col='orange', lwd=3)
-lines(s.out.mon3$D[4951:5050], s.out.mon3$K.stationary[100,], col='magenta', lwd=3)
+lines(s.out.mon3$D[4951:5050], s.out.mon3$K.stationary[100,], col='blue', lwd=3)
 legend('topright', c('Dist(K hat)', 'True', 'Linear', 'Poly 3', 'Mono 3'), 
-       col=c('black', 'green', 'red', 'orange', 'magenta'), pch=c(16, rep(NA, 4)), lwd = c(NA, rep(3, 4)))
-
+       col=c('dark gray', 'green', 'red', 'orange', 'blue'), pch=c(16, rep(NA, 4)), lwd = c(NA, rep(3, 4)))
+dev.off()
 
 
 model$K.true[1:3]
