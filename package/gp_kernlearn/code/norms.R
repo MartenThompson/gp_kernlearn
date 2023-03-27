@@ -1,4 +1,16 @@
-
+weighted_eval_cov_maker <- function(K, schedule) {
+  if (K != length(schedule)) {
+    stop('Weight schedule should be same as K (', K, '); is ', length(schedule))
+  }
+  
+  weighted_eval_cov <- function(mat) {
+    cov.mat <- cov(mat) 
+    e.vals <- eigen(cov.mat, symmetric = TRUE, only.values = TRUE)[[1]][1:K]
+    weighted.mean(e.vals, schedule)
+  }
+  
+  return(weighted_eval_cov)
+}
 
 # aka Euclidean norm, sqrt of sum of |a_ij|^2
 frob_norm_cov <- function(mat) {
