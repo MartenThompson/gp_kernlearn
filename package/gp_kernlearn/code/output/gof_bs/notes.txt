@@ -1,0 +1,5 @@
+wem 2 pow 
+	e.g. multiply eigenvalues by 32, 16, 8, 4, 2
+
+wem negative 2 pow
+	e.g. multiply eigenvalues by 1/32, 1/16, 1/8, 1/4, 1/2
