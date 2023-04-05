@@ -235,6 +235,16 @@ rbf_kernel <- function(X, alpha.0, alpha.1, fuzz) {
   return(K)
 }
 
+matern_kernel_euc <- function(X, rho, nu, fuzz) {
+  D <- as.matrix(dist(X, diag=TRUE, upper=TRUE))
+  
+  diag(D) <- 1e-8
+  gam <- (2^(1-nu))/ gamma(nu)
+  const <- (sqrt(2*nu) * D / rho)^nu
+  bess <- besselK(sqrt(2*nu) * D/rho, nu = nu)
+  return(gam * const * bess)
+}
+
 ####################
 ## USING ALL THIS ##
 ####################
