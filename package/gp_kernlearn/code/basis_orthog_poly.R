@@ -72,9 +72,9 @@ make_legendre1D_basis_maker <- function(degree) {
     
     n <- nrow(X)
     x <- X[,1]
-    X.basis <- matrix(NA, nrow=n, ncol=degree+1)  
+    X.basis <- matrix(NA, nrow=n, ncol=degree)  
     # Legendre 0
-    X.basis[,1] <- rep(1,n)
+    #X.basis[,1] <- rep(1,n)
     
     if (0 == degree) {
       return(X.basis)
@@ -83,7 +83,7 @@ make_legendre1D_basis_maker <- function(degree) {
     for (deg in 1:degree) {
       f <- legendre_polynomials[[deg]]
       #print(f)
-      X.basis[,deg+1] <- f(x)
+      X.basis[,deg] <- f(x)
     }
     
     return(X.basis)
@@ -91,6 +91,40 @@ make_legendre1D_basis_maker <- function(degree) {
   
   return(basis_maker)
 }
+
+make_monomial1D_basis_maker <- function(degree) {
+  if (10 < degree) {
+    stop('Only implemented up to degree 10.')
+  }
+  
+  basis_maker <- function(X) {
+    p <- dim(X)[2]
+    if (1 != p) {
+      stop('X should be Nx1; is Nx', p)
+    }
+    
+    n <- nrow(X)
+    x <- X[,1]
+    X.basis <- matrix(NA, nrow=n, ncol=degree)  
+    # Legendre 0
+    #X.basis[,1] <- rep(1,n)
+    
+    if (0 == degree) {
+      return(X.basis)
+    }
+    
+    for (deg in 1:degree) {
+      f <- monomials[[deg]]
+      #print(f)
+      X.basis[,deg] <- f(x)
+    }
+    
+    return(X.basis)
+  }
+  
+  return(basis_maker)
+}
+
 
 
 testing <- FALSE
