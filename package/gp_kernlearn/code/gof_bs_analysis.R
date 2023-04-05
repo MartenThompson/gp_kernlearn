@@ -16,10 +16,10 @@ set.seed(2023)
 N.x <- 100         # number of x locations
 X <- matrix(seq(-1,1,length.out=N.x), nrow=N.x, ncol=1)
 #K <- lin_kernel(X, 1, 1, 0.1)
-#K <- quad_kernel(X, 1, 1, 1, 0.1)
+K <- quad_kernel(X, 1, 1, 1, 0)
 #K <- cubic_kernel(X, 1, 1, 1, 1, 0.1)
-K <- rbf_kernel(X, 5, 0.05, 0.1) 
-gen.name <- 'rbf5-005-fz01' # 'lin1-1' 
+#K <- rbf_kernel(X, 5, 0.05, 0.1) 
+gen.name <- 'quad1-1-1-fz0' #'rbf5-005-fz01' # 'lin1-1' 
 n.train.datasets <- 100 # this actually needs to be 1e3 before cov(Y.train) looks like K
 
 Y.train <- list()
@@ -35,13 +35,13 @@ plot(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Fit/Load Model ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-model.name <- 'model_Ycubic_tr100_legd3' # NA
+model.name <- NA #'noint_Yquad1-1-1_tr100_legd1' # NA
 saved.model.path <- paste0(save_slug, 'models/', model.name, '.RData')
 
 # Either fit a model or load  a saved one.
 if (is.na(model.name)) {
   deg <- 2
-  leg_basis_maker <- make_legendre1D_basis_maker(degree = deg)
+  leg_basis_maker <- make_monomial1D_basis_maker(degree = deg)
   b.X <- leg_basis_maker(X)
   model <- fit_kernlearn(b.X, leg_basis_maker, Y.train)
   model$K.true <- K
@@ -63,7 +63,9 @@ if (is.na(model.name)) {
   }
 }
 
-
+model$V.est
+image(model$K.est)
+image(model$K.true)
 plot(model_data_gen_single())
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,9 +91,9 @@ obs.mat <- matrix(unlist(model$Y.train), ncol=model$N.x, byrow = TRUE)
 #image(model$V.est)
 
 set.seed(2023)
-norm.name <- 'wem_uniform/'    # UPDATE 1/3
-K = 5
-norm <- weighted_eval_cov_maker(K=K, schedule = rep(1,K))
+norm.name <- 'wem_neg2pow/'    # UPDATE 1/3
+K <- 10
+norm <- weighted_eval_cov_maker(K=K, schedule = rep(2,K)^c(-K:-1))
 training.sumstat <- norm(obs.mat) # UPDATE 2/3
 n.boot <- 2e2
 boot.sumstats <- bootstrap_stat_dist(norm, model_data_gen, n.boot) # UPDATE 3/3
