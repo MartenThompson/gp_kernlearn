@@ -56,6 +56,38 @@ legendre_polynomials <- c( # 0 is 1
     return((1/256)*(46189*x^10 - 109395*x^8 + 90090*x^6 - 30030*x^4 + 3465*x^2 - 63))
   })
 
+alt_leg <- function(degree, renormalize=FALSE) {
+  leg_poly <- function(X) {
+    sapply(X, function(x){(1/2^degree)*sum((choose(degree, 0:degree)^2)*(x-1)^(degree-0:degree)*(x+1)^(0:degree))})
+  }
+  
+  if (renormalize) {
+    # so integrate(poly_d * poly_d, -1, 1) = 1
+    leg_poly_nrm <- function(X) {
+      sqrt((2*degree+1)/2)*leg_poly(X)
+    }
+    return(leg_poly_nrm)
+  }
+  
+  return(leg_poly)
+}
+
+# l1 <- alt_leg(1)
+# l2 <- alt_leg(2)
+# l3 <- alt_leg(3)
+# l4 <- alt_leg(4)
+# l5 <- alt_leg(5)
+# B.alt <- matrix(c(l1(X), l2(X), l3(X), l4(X), l5(X)), ncol=5, byrow=F)
+# zapsmall(t(B.alt)%*%B.alt)
+# 
+# l1.nrm <- alt_leg(1, TRUE)
+# l2.nrm <- alt_leg(2, TRUE)
+# l3.nrm <- alt_leg(3, TRUE)
+# l4.nrm <- alt_leg(4, TRUE)
+# l5.nrm <- alt_leg(5, TRUE)
+# integrate(function(x){l3.nrm(x)*l3.nrm(x)}, -1 ,1)
+# B.alt.nrm <- matrix(c(l1.nrm(X), l2.nrm(X), l3.nrm(X), l4.nrm(X), l5.nrm(X)), ncol=5, byrow=F)
+# zapsmall(t(B.alt.nrm)%*%B.alt.nrm)#*mean(diff(X))
 
 # basis_maker()s should take one argument, X, and have everything else configured.
 
