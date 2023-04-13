@@ -104,9 +104,9 @@ make_legendre1D_basis_maker <- function(degree) {
     
     n <- nrow(X)
     x <- X[,1]
-    X.basis <- matrix(NA, nrow=n, ncol=degree)  
+    X.basis <- matrix(NA, nrow=n, ncol=degree+1)  
     # Legendre 0
-    #X.basis[,1] <- rep(1,n)
+    X.basis[,1] <- rep(1,n)
     
     if (0 == degree) {
       return(X.basis)
@@ -115,7 +115,7 @@ make_legendre1D_basis_maker <- function(degree) {
     for (deg in 1:degree) {
       f <- legendre_polynomials[[deg]]
       #print(f)
-      X.basis[,deg] <- f(x)
+      X.basis[,deg+1] <- f(x)
     }
     
     return(X.basis)
