@@ -11,7 +11,7 @@ source('package/gp_kernlearn/code/basis_orthog_poly.R')
 n <- 100
 X <- matrix(seq(-1,1, length.out=n), ncol=1)
 #Sigma.true <- cubic_kernel(X, 1,1,1,1,1e-6)
-Sigma.true <- rbf_kernel(X, 5, 0.05, 1e-6)
+Sigma.true <- rbf_kernel(X, 5, 0.05, 1)
 Gamma.true <- eigen(Sigma.true)$vectors
 Lambda.true <- diag(eigen(Sigma.true)$values)
 
@@ -26,6 +26,7 @@ Y <- Y-mean(Y)
 
 J <- 9
 basis_maker <- make_legendre1D_basis_maker(J-1)
+#basis_maker <- make_monomial1D_basis_maker(J)
 B.0 <- basis_maker(X)
 plot(ts(B.0[,1]), ylim=c(-2,2))
 for (j in 2:J) {
@@ -53,7 +54,7 @@ par(mfrow=c(1,1))
 #acf(beta.post)
 plot(X, Y, pch=16)
 points(X, br.out$fitted.values, col='red', pch=16)
-
+legend('topleft', legend=c('Observed', 'Reg Fit'), fill=c('black', 'red'))
 beta.M2.post <- matrix(0, J, J)
 for (i in 1:H) {
   beta.M2.post <- beta.M2.post + t(t(beta.post[i,]))%*%beta.post[i,]
@@ -97,6 +98,9 @@ legend('topleft', legend=c('True', 'Reg Fit', 'Gamma 1'), col=c('black', 'black'
 
 plot(Sigma.hat[,1], Sigma.hat[,2])
 plot(Y,Sigma.hat[,1])
+
+
+
 #plot(ts(Gamma.hat[,1]), ylim=c(-.25,0.25))
 #lines(ts(Gamma.hat[,1]+Gamma.hat[,2]), col='green')
 #lines(br.out$fitted.values/25, col='red')
@@ -105,3 +109,24 @@ plot(Y,Sigma.hat[,1])
 #V.temp <- B.0%*%beta.M2.post%*%t(B.0)
 #V.temp.eig <- eigen(V.temp)
 #zapsmall(V.temp.eig$values)
+
+
+#### Freq ####
+#m.lm <- lm(Y~B.0-1)
+s2 <- 1
+beta.cov.freq <- s2*solve(t(B.0)%*%B.0)
+beta.hat <- solve(t(B.0)%*%B.0)%*%t(B.0)%*%Y
+V.0.freq <- beta.cov.freq #+ beta.hat%*%t(beta.hat)
+
+V.1.freq <- D.0%*%t(Q.0)%*%V.0.freq%*%Q.0%*%D.0
+V.1.freq.eig <- eigen(V.1.freq)
+P.1.freq <- V.1.freq.eig$vectors
+D.1.freq <- diag(V.1.freq.eig$values)
+
+
+Gamma.hat.freq <- P.0%*%P.1.freq
+Lambda.hat.freq <- D.1.freq
+Sigma.hat.freq <- Gamma.hat.freq%*%Lambda.hat.freq%*%t(Gamma.hat.freq)
+
+diag(D.1.freq)
+image(Sigma.hat.freq)
