@@ -38,7 +38,7 @@ Q.0 <- B.0.svd$v
 #sum(B.0 - P.0%*%D.0%*%t(Q.0))
 
 H <- 1000
-br.out <- stan_glm(Y ~ B.0-1, family=gaussian())
+br.out <- stan_glm(Y ~ B.0-1, family=gaussian(), iter=H)
 beta.post <- matrix(NA, nrow=H, ncol=J)
 for (j in 1:J) {
   beta.post[,j] <- unlist(br.out$stanfit@sim$samples[[1]][[j]])
@@ -75,8 +75,10 @@ Lambda.hat <- D.1
 Sigma.hat <- Gamma.hat%*%Lambda.hat%*%t(Gamma.hat)
 
 
+# all the variance in direction of 1st eigenvector?
 diag(Lambda.hat)
 diag(Lambda.true)[1:J]
+
 
 image(Sigma.true)
 image(Sigma.hat)
@@ -88,6 +90,17 @@ for (j in 1:J) {
 par(mfrow=c(1,1))
 
 
+plot(ts(Y), lwd=2)
+lines(-ts(Gamma.hat[,1]*sqrt(diag(Lambda.hat)[1])), col='red', lwd=2)
+lines(ts(br.out$fitted.values), lty=2, lwd=2)
+legend('topleft', legend=c('True', 'Reg Fit', 'Gamma 1'), col=c('black', 'black', 'red'), lty=c(1,2,1), lwd=2)
+
+plot(Sigma.hat[,1], Sigma.hat[,2])
+plot(Y,Sigma.hat[,1])
+#plot(ts(Gamma.hat[,1]), ylim=c(-.25,0.25))
+#lines(ts(Gamma.hat[,1]+Gamma.hat[,2]), col='green')
+#lines(br.out$fitted.values/25, col='red')
+#lines(Y/25, col='red', lty=2)
 
 #V.temp <- B.0%*%beta.M2.post%*%t(B.0)
 #V.temp.eig <- eigen(V.temp)
