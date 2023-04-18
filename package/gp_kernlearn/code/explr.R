@@ -64,7 +64,7 @@ Y <- Y-mean(Y)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-J <- 9
+J <- 7
 basis_maker <- make_legendre1D_basis_maker(J-1)
 #basis_maker <- make_monomial1D_basis_maker(J)
 B.0 <- basis_maker(X)
@@ -95,21 +95,48 @@ diag(Lambda.true)[1:J]
 image(Sigma.true)
 image(kl.out$Sigma.hat)
 
-par(mfrow=c(2,2))
-for (j in 1:J) {
-  plot(eigen(Sigma.true)$vectors[,j], kl.out$Gamma.hat[,j])  
-}
-par(mfrow=c(1,1))
+#par(mfrow=c(2,2))
+#for (j in 1:J) {
+#  plot(eigen(Sigma.true)$vectors[,j], kl.out$Gamma.hat[,j])  
+#}
+#par(mfrow=c(1,1))
 
 
 plot(ts(Y), lwd=2)
-lines(-ts(kl.out$Gamma.hat[,1]*sqrt(diag(kl.out$Lambda.hat)[1])), col='red', lwd=2)
+lines(ts(kl.out$Gamma.hat[,1]*sqrt(diag(kl.out$Lambda.hat)[1])), col='red', lwd=2)
 lines(ts(kl.out$stan.fit$fitted.values), lty=2, lwd=2)
 legend('topleft', legend=c('True', 'Reg Fit', 'Gamma 1'), col=c('black', 'black', 'red'), lty=c(1,2,1), lwd=2)
 
 plot(kl.out$Sigma.hat[,1], kl.out$Sigma.hat[,2])
 plot(Y,kl.out$Sigma.hat[,1])
 
+A4 =kl.out$beta.post %*% t(B.0)
+YHat = A4[1,] ### this is just an example for the first row from the posterior
+A9 = acf(YHat, lag.max=length(Y), plot = FALSE, type = "covariance")
+
+Y.temp <- A4  #[1:3,]
+acf.temp <- acf(t(Y.temp), lag.max = length(Y), plot=FALSE, type='covariance')
+
+acf.temp.no.crossterms <- matrix(NA, nrow=100, ncol=1000)
+for (i in 1:1000) {
+  acf.temp.no.crossterms[,i] <- acf.temp$acf[,i,i]
+}
+
+plot(ts(sapply(1:100, function(i){mean(acf.temp.no.crossterms[i,])})), ylim=c(-5,10), lty=2)
+lines(ts(sapply(1:100, function(i){mean(acf.temp.no.crossterms.1[i,])})), lty=2)
+lines(ts(sapply(1:100, function(i){mean(acf.temp.no.crossterms.2[i,])})), lty=2)
+lines(ts(sapply(1:100, function(i){mean(acf.temp.no.crossterms.3[i,])})), lty=2)
+lines(ts(sapply(1:100, function(i){mean(acf.temp.no.crossterms.4[i,])})), lty=2)
+lines(ts(Sigma.true[1,]), lwd=2, col='red')
+
+# garbo.1 <- sin((pi/10)*1:50)
+# garbo.2 <- sin((pi/50)*1:50)
+# garbo.3 <- sin((pi/100)*1:50)
+# acf(garbo.1, plot = FALSE)
+# acf(garbo.2, plot = FALSE)
+# acf(garbo.3, plot = FALSE)
+# garbo <- cbind(garbo.1, garbo.2, garbo.3)
+# garbo.acf <- acf(garbo, plot=FALSE)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
