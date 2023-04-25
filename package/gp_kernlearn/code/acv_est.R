@@ -1,4 +1,47 @@
+gen_data <- function(n.train.datasets, Kern) {
+  N.x <- ncol(Kern)
+  Y.train <- list()
+  for (r in 1:n.train.datasets) {
+    err <- t(mvtnorm::rmvnorm(1, rep(0, N.x), Kern))
+    mu <- rep(0, N.x)
+    Y <- mu + err
+    Y.train[[r]] <- Y
+  }  
+  return(Y.train)
+}
 
+plot_results <- function(acv.est.all, acv.ytrain, acv.true, ylab='cov', title='', var.0, fuzz, alpha=0.05, thin.mod=500) {
+  lag <- ncol(acv.est.all)-1 # b/c 0 lag 
+  ymin <- -var.0 #min(quantile(acv.est.all, 0.01), acv.ytrain, acv.true)
+  ymax <- 2*var.0 #max(quantile(acv.est.all,0.99), acv.ytrain, acv.true)
+  
+  par(mar=c(4.1, 4.1, 1, 1))
+  plot(NA, NA, xlim=c(0, lag), ylim=c(ymin, ymax), xaxs='i',
+       xlab='lag', ylab=ylab, main=title)
+  
+  pd.quant.pointwise <- apply(acv.est.all, 2, function(c) {quantile(c, c(alpha/2, .5, 1-alpha/2))})
+  poly.x <- c(0:lag, lag:0)
+  poly.y <- c(pd.quant.pointwise[1,], rev(pd.quant.pointwise[3,]))
+  polygon(poly.x, poly.y, border=NA, col=rgb(1,0,0,0.25))
+  lines(0:lag, pd.quant.pointwise[2,], col='red', lwd=2)
+  lines(0:lag, acv.true[1:(lag+1)], col='green', lwd=2)
+  lines(0:lag, acv.ytrain, col='blue', lwd=2, lty=2)
+  legend('topright', legend=c('True', 'Median Est', 'Observed'), col=c('green', 'red', 'blue'), lwd=3, lty=c(1,1,2))
+  
+  par(mar=c(5.1, 4.1, 4.1, 2.1))
+}
+
+
+plot_yobs <- function(X, Y.train, n.plot) {
+  par(mar=c(4.1, 4.1, 1, 1))
+  plot(X,Y.train[[1]], col=rgb(1,1,1), 
+       xaxs='i',
+       ylim=c(min(unlist(Y.train)), max(unlist(Y.train))), ylab='Y')
+  for (i in 1:n.plot) {
+    lines(X,Y.train[[i]])
+  }
+  par(mar=c(5.1, 4.1, 4.1, 2.1))
+}
 
 stan_beta_post <- function(Y, B.0, n.mcmc) {
   br.out <- stan_glm(Y ~ B.0-1, family=gaussian(), iter=n.mcmc)
