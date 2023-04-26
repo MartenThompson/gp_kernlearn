@@ -9,16 +9,24 @@ source('package/gp_kernlearn/code/acv_est.R')
 #### Data Gen ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 set.seed(212)
-R <- 500
-n <- 200
+R <- 20
+n <- 50
 X <- matrix(seq(-1,1, length.out=n), ncol=1)
-sig.0 <- 10
-sig.1 <- 0.1
-fuzz <- 1
-Sigma.true <- rbf_kernel(X, sig.0, sig.1, fuzz) 
+sig.0 <- 1
+sig.1 <- 1
+sig.2 <- 1
+fuzz <- 1e-5
+#Sigma.true <- rbf_kernel(X, sig.0, sig.1, fuzz) 
+#Sigma.true <- cubic_kernel(X, sig.0, sig.1,sig.2,sig.3,fuzz)
+Sigma.true <- matern_kernel_euc(X, sig.0, sig.1, sig.2, fuzz)
 Y.train <- gen_data(R, Sigma.true)
 
-data.name <- paste0('Ytrain_rbf',sig.0, '-', sig.1,'-',fuzz,'_R',R,'Nx',n,'/')
+#plot(ts(Sigma.true[1,]))
+#plot_yobs(X, Y.train, 5)
+
+#data.name <- paste0('Ytrain_rbf',sig.0, '-', sig.1,'-',fuzz,'_R',R,'Nx',n,'/')
+#data.name <- paste0('Ytrain_cubic',sig.0, '-', sig.1,'-', sig.2,'-', sig.3,'-',fuzz,'_R',R,'Nx',n,'/')
+data.name <- paste0('Ytrain_matern',sig.0, '-', sig.1,'-', sig.2,'-',fuzz,'_R',R,'Nx',n,'/')
 save.slug <- paste0('package/gp_kernlearn/code/output/acv/', data.name)
 dir.create(save.slug)
 
@@ -41,7 +49,7 @@ temp <- lapply(Y.train, function(x) {var(x)})
 summary(unlist(temp))
 
 
-J <- 10
+J <- 4
 basis_maker <- make_legendre1D_basis_maker(J-1)
 B.0 <- basis_maker(X)
 
@@ -52,7 +60,7 @@ B.0 <- basis_maker(X)
 #lag <- ifelse(n < 100 || R < 100, min(floor(0.75*R), floor(0.5*n)), 25)
 lag <- min(floor(0.75*R), floor(0.5*n), 75)
 acv.cov.within <- est_acv_within(Y.train, B.0, 1e3, lag, 'covariance')
-saveRDS(acv.cov.within, paste0(save.slug, 'acv_cov', '_L', lag, '.RData'))
+saveRDS(acv.cov.within, paste0(save.slug, 'acv_cov','_J', J, '_L', lag, '.RData'))
 #acv.cor.within <- est_acv_within(Y.train, B.0, 1e3, lag, 'correlation')
 
 # looks reasonable
@@ -68,8 +76,8 @@ plot_results(acv.cov.within$acv.all,
              acf(unlist(Y.train), lag=lag, plot=FALSE, type='covariance')$acf, 
              Sigma.true[1,],
              'Covariance', 
-             '',# paste0('RBF(', sig.0,',', sig.1, ',', fuzz, '). Within. J=', J, '. Nx=', n, '. R=', R),
-             sig.0, fuzz,
+             '',
+             Sigma.true[1,1], fuzz,
              alpha = alpha
              )
 dev.off()
@@ -80,8 +88,8 @@ plot_results(acv.cov.within$acv.all.w.bt,
              acf(unlist(Y.train), lag=lag, plot=FALSE, type='covariance')$acf, 
              Sigma.true[1,],
              'Covariance',
-             '',# paste0('RBF(', sig.0,',', sig.1, ',', fuzz, '). Within. J=', J, '. Nx=', n, '. R=', R),
-             sig.0, fuzz,
+             '',
+             Sigma.true[1,1], fuzz,
              alpha=alpha
              )
 dev.off()

@@ -12,8 +12,8 @@ gen_data <- function(n.train.datasets, Kern) {
 
 plot_results <- function(acv.est.all, acv.ytrain, acv.true, ylab='cov', title='', var.0, fuzz, alpha=0.05, thin.mod=500) {
   lag <- ncol(acv.est.all)-1 # b/c 0 lag 
-  ymin <- -var.0 #min(quantile(acv.est.all, 0.01), acv.ytrain, acv.true)
-  ymax <- 2*var.0 #max(quantile(acv.est.all,0.99), acv.ytrain, acv.true)
+  ymin <- -0.25*var.0#-var.0 #min(quantile(acv.est.all, 0.01), acv.ytrain, acv.true)
+  ymax <- var.0 #max(quantile(acv.est.all,0.99), acv.ytrain, acv.true)
   
   par(mar=c(4.1, 4.1, 1, 1))
   plot(NA, NA, xlim=c(0, lag), ylim=c(ymin, ymax), xaxs='i',
