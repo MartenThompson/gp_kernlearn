@@ -21,6 +21,8 @@
 # For linear data: 1 not that different than 2,3 so don't bother.
 # For quad data: 1 different than 2; 2 not that diff than 3, 4 so go with 2.
 
+rm(list=ls())
+
 setwd('~/Git/gp_kernlearn/')
 library(rstanarm)
 source('package/gp_kernlearn/code/basis_orthog_poly.R')
@@ -29,43 +31,6 @@ source('package/gp_kernlearn/code/kernlearn.R')
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Kern Learn Loop ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-# assumes 0 centered X
-lin_kernel <- function(X, sigma.0, sigma.1, fuzz=0.1) {
-  K <- sigma.0 + sigma.1*X%*%t(X)
-  diag(K) <- diag(K) + fuzz
-  return(K)
-}
-
-quad_kernel <- function(X, sigma.0, sigma.1, sigma.2, fuzz=0.1) {
-  #K <- sigma.0 + sigma.1*X%*%t(X) + sigma.2*(X%*%t(X))%*%(X%*%t(X))
-  #K <- (sigma.0 + sigma.1*X%*%t(X))%*%(sigma.0 + sigma.2*X%*%t(X))
-  n <- dim(X)[1]
-  K <- matrix(NA, n,n)
-  for (i in 1:n) {
-    for (j in 1:n) {
-      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
-    }
-  }
-  diag(K) <- diag(K) + fuzz
-  return(K)
-}
-
-cubic_kernel <- function(X, sigma.0, sigma.1, sigma.2, sigma.3, fuzz=0.1) {
-  n <- dim(X)[1]
-  K <- matrix(NA, n,n)
-  for (i in 1:n) {
-    for (j in 1:n) {
-      K[i,j] <- sigma.0 + sigma.1*X[i,]%*%t(X[j,]) + 
-        sigma.2*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,]) +
-        sigma.3*X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])%*%X[i,]%*%t(X[j,])
-    }
-  }
-  diag(K) <- diag(K) + fuzz
-  return(K)
-}
-
 
 gen_dat_est_covs <- function(pri.deg, alt.deg, N, K, reps){
   leg_basis_maker_pri <- make_legendre1D_basis_maker(degree = pri.deg)
@@ -155,30 +120,32 @@ boxM_stat <- function(K1, K2, reps, n.x) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-save_slug <- 'package/gp_kernlearn/code/output/gof_boxm_quadkern/'
-dir.create(file.path(save_slug))
-
 N.x <- 100         # number of x locations
-X <- matrix(seq(-5,5,length.out=N.x), nrow=N.x, ncol=1)
-#K <- lin_kernel(X, 1, 1/25, 0.1)
-K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
+X <- matrix(seq(-1,1,length.out=N.x), nrow=N.x, ncol=1)
+K <- lin_kernel(X, 1, 1, 0.1)
+#K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
 #K <- cubic_kernel(X, 1, 1/25, 1/25, 1/25, 0.1)
+kern.name <- 'lin1-1-0.1/'
 
-# plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
-# for (r in 1:5) {
-#   err <- t(mvtnorm::rmvnorm(1, rep(0, N.x), K))
-#   mu <- rep(0, N.x)
-#   Y <- mu + err
-#   points(X, Y, pch=16, col=rgb(runif(1),runif(1),runif(1)))
-# }
+save_slug <- paste0('package/gp_kernlearn/code/output/gof_boxm_', kern.name)
+dir.create(file.path(save_slug))
+saveRDS(list(Nx=N.x, X=X,K=K), paste0(save_slug, 'datagen_details.RData'))
 
 
-n.mat.samp <- 320 # e.g. n material samples
-n.analysis <- 1 # number of times to get box stat
+plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
+for (r in 1:5) {
+  err <- t(mvtnorm::rmvnorm(1, rep(0, N.x), K))
+  mu <- rep(0, N.x)
+  Y <- mu + err
+  points(X, Y, pch=16, col=rgb(runif(1),runif(1),runif(1)))
+}
+
+
+n.mat.samp <- 20 # e.g. n material samples
+n.analysis <- 30 # number of times to get box stat
 
 primary.degree <- 1
-alternative.degs <- 2:2
+alternative.degs <- 1:2
 
 stat.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
 df.hist <- matrix(NA, nrow=n.analysis, ncol=length(alternative.degs))
