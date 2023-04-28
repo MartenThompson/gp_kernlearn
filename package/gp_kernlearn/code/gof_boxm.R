@@ -103,7 +103,7 @@ gen_dat_est_covs <- function(pri.deg, alt.deg, N, K, reps){
 boxM_stat <- function(K1, K2, reps, n.x) {
   n <- 2*reps
   S.pooled = (1/(n-2))*(((reps-1)*K1) + ((reps-1)*K2))  
-  M = (n-2)*det(S.pooled, log=TRUE) - (reps-1)*det(K1, log=TRUE) - (reps-1)*det(K2, log=TRUE)
+  M = (n-2)*log(det(S.pooled)) - (reps-1)*log(det(K1)) - (reps-1)*log(det(K2))
   c = ((2*n.x^2 + 3*n.x -1)/(6*(n.x+1)))*((2/(reps-1)) - (1/(n-2)))
   stat = M*(1-c)
   df = 0.5*n.x*(n.x+1)
@@ -117,10 +117,13 @@ boxM_stat <- function(K1, K2, reps, n.x) {
 }
 
 
+
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Analysis ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-N.x <- 100         # number of x locations
+N.x <- 10         # number of x locations
 X <- matrix(seq(-1,1,length.out=N.x), nrow=N.x, ncol=1)
 K <- lin_kernel(X, 1, 1, 0.1)
 #K <- quad_kernel(X, 1, 1/25, 1/25, 0.1)
@@ -129,7 +132,6 @@ kern.name <- 'lin1-1-0.1/'
 
 save_slug <- paste0('package/gp_kernlearn/code/output/gof_boxm_', kern.name)
 dir.create(file.path(save_slug))
-saveRDS(list(Nx=N.x, X=X,K=K), paste0(save_slug, 'datagen_details.RData'))
 
 
 plot(NA,NA,xlim=c(min(X),max(X)), ylim=c(-8,8))
@@ -142,7 +144,9 @@ for (r in 1:5) {
 
 
 n.mat.samp <- 20 # e.g. n material samples
-n.analysis <- 30 # number of times to get box stat
+n.analysis <- 2 # number of times to get box stat
+
+saveRDS(list(Nx=N.x, X=X,K=K), paste0(save_slug, 'datagen_details_nx', N.x, '_nmat',n.mat.samp,'.RData'))
 
 primary.degree <- 1
 alternative.degs <- 1:2
@@ -177,3 +181,7 @@ write.csv(stat.hist, paste0(save_slug, 'stat_hist_prim', primary.degree, '_nx', 
 write.csv(df.hist, paste0(save_slug, 'df_hist_prim', primary.degree, '_nx', N.x, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
 write.csv(pval.hist, paste0(save_slug, 'pval_hist_prim', primary.degree, '_nx', N.x, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
 
+out.mat <- matrix(apply(pval.hist, 2, function(col){c(mean(col), signif(mean(col),2), sd(col), signif(sd(col),2))}), nrow=4)
+out.mat <- cbind(c('mean', 'mean', 'sd', 'sd'), out.mat)
+colnames(out.mat) <- c('', cn)
+write.csv(out.mat, paste0(save_slug, 'pval_sum_prim', primary.degree, '_nx', N.x, '_nmat', n.mat.samp, '_nsamp', n.analysis, '.csv'), row.names = FALSE)
