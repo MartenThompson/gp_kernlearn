@@ -61,4 +61,83 @@ plot_nice(2, datagen.list, c(-6,6))
 dev.off()
  
 
+n.plot <- 4
+N <- 100
+X <- seq(-1, 1, length.out=N)
+K <- rbf_kernel(X, 1, 1, 1e-8)
 
+Y.plot <- list() 
+for (i in 1:n.plot) {
+  err <- t(mvtnorm::rmvnorm(1, rep(0, N), K))
+  mu <- rep(0, N)
+  Y.plot[[i]] <- Y <- mu + err
+}
+
+x.restrict <- 1:25
+
+png('./package/gp_kernlearn/code/output/acv/data_gen_eg_restricted.png', height=5, width=5, units='in', res=100)
+plot(NA, NA, xlim=c(-1,1), ylim=c(-2,2), xlab='x', ylab='')
+for (i in 1:n.plot) {
+  lines(X[x.restrict], Y.plot[[i]][x.restrict])
+}
+dev.off()
+
+png('./package/gp_kernlearn/code/output/acv/data_gen_eg.png', height=5, width=5, units='in', res=100)
+plot(NA, NA, xlim=c(-1,1), ylim=c(-2,2), xlab='x', ylab='')
+for (i in 1:n.plot) {
+  lines(X, Y.plot[[i]])
+}
+dev.off()
+
+
+
+
+rm(list=ls())
+
+setwd('~/Git/gp_kernlearn/')
+source('package/gp_kernlearn/code/basis_orthog_poly.R')
+source('package/gp_kernlearn/code/kernlearn.R')
+
+mod.l5.rbf <- readRDS('package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_tr100_legd5.RData')
+X <- mod.l5.rbf$b.X.train[,2]
+Y.obs <- mod.l5.rbf$Y.train[[length(mod.l5.rbf$Y.train)]]
+
+mod.l7.rbf <- readRDS('package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_tr100_legd7.RData')
+
+l5.post <- posterior_test_meanvar_brev(mod.l5.rbf$E.est, mod.l5.rbf$V.est, matrix(X, ncol=1), Y.obs, matrix(X, ncol=1), make_legendre1D_basis_maker(5))
+l7.post <- posterior_test_meanvar_brev(mod.l7.rbf$E.est, mod.l7.rbf$V.est, matrix(X, ncol=1), Y.obs, matrix(X, ncol=1), make_legendre1D_basis_maker(7))
+
+
+png('./package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_fits.png', height=5, width=5, units='in', res=100)
+plot(X, Y.obs, pch=16,
+     ylim=c(min(Y.obs), max(Y.obs)*1.5), ylab='')
+lines(X, l5.post$post.test.mean, lwd=2, col='blue')
+#polygon(c(X, rev(X)), c(l5.post$post.test.mean+2*sqrt(diag(l5.post$post.test.var)), rev(l5.post$post.test.mean-2*sqrt(diag(l5.post$post.test.var)))), col='blue', border = NA)
+lines(X, l7.post$post.test.mean, lwd=2, col='green')
+#polygon(c(X, rev(X)), c(l7.post$post.test.mean+2*sqrt(diag(l7.post$post.test.var)), rev(l7.post$post.test.mean-2*sqrt(diag(l7.post$post.test.var)))), col='green', border = NA)
+legend('top', legend=c('Obs', '5th Degree', '7th Degree'), col=c('black','blue','green'), pch=c(16, NA, NA), lty=c(NA, 1, 1), lwd=c(NA, 3,3))
+dev.off()
+
+
+
+
+png('./package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_STANfits.png', height=5, width=5, units='in', res=100)
+plot(X, Y.obs, pch=16,
+     ylim=c(min(Y.obs), max(Y.obs)*1.5), ylab='')
+lines(X, mod.l5.rbf$stan.output$fitted.values, lwd=2, col='blue')
+lines(X, mod.l7.rbf$stan.output$fitted.values, lwd=2, col='green')
+legend('top', legend=c('Obs', '5th Degree', '7th Degree'), col=c('black','blue','green'), pch=c(16, NA, NA), lty=c(NA, 1, 1), lwd=c(NA, 3,3))
+dev.off() 
+
+n <- length(X)
+
+
+png('./package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_Ktrue.png', height=5, width=5, units='in', res=100)
+image(mod.l7.rbf$K.true[n:1,], xaxt='n', yaxt='n')
+dev.off()
+png('./package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_tr100_legd5_Kest.png', height=5, width=5, units='in', res=100)
+image(mod.l7.rbf$K.est[n:1,], xaxt='n', yaxt='n')
+dev.off()
+png('./package/gp_kernlearn/code/output/gof_bs/models/model_Yrbf5-005-fz01_tr100_legd7_Kest.png', height=5, width=5, units='in', res=100)
+image(mod.l5.rbf$K.est[n:1,], xaxt='n', yaxt='n')
+dev.off()
