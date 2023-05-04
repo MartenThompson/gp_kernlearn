@@ -135,7 +135,7 @@ kern.name <- 'quad1-1-1-0.1/'
 save_slug <- paste0('package/gp_kernlearn/code/output/gof_q2_', kern.name)
 dir.create(file.path(save_slug))
 
-primary.degree <- 2 # as.numeric(args.in[1])
+primary.degree <- 3 # as.numeric(args.in[1])
 alternative.degs <- primary.degree:(primary.degree+1)
 
 n.mat.samp <- 500 #as.numeric(args.in[2]) # ie n material samples
