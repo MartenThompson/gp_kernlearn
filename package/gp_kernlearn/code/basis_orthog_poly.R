@@ -124,6 +124,40 @@ make_legendre1D_basis_maker <- function(degree) {
   return(basis_maker)
 }
 
+# treats intercept (f(x) = 1) as degree zero
+make_legendre2D_basis_maker <- function(d1, d2=d1) {
+  basis_maker <- function(X) {
+    if (2 != ncol(X)) {
+      stop('X must be n x 2, actuall has ', ncol(X), ' columns.')
+    }
+    
+    n <- nrow(X)
+    x1 <- X[,1]
+    x2 <- X[,2]
+    
+    p <- (d1+1)*(d2+1)
+    X.basis <- matrix(NA, nrow=n, ncol=p)
+    
+    f1.set <- lapply(0:d1, alt_leg)
+    f2.set <- lapply(0:d2, alt_leg)
+    
+    col.fill <- 1
+    for (i in 1:(d1+1)) {
+      for (j in 1:(d2+1)) {
+        f1 <- f1.set[[i]]
+        f2 <- f2.set[[j]]
+        
+        X.basis[,col.fill] <- f1(x1) * f2(x2)
+        col.fill <- col.fill+1
+      }
+    }
+    
+    return(X.basis)
+  }
+  
+  return(basis_maker)
+}
+
 make_monomial1D_basis_maker <- function(degree) {
   if (10 < degree) {
     stop('Only implemented up to degree 10.')
@@ -172,17 +206,7 @@ if(testing) {
 }
 
 
-make_legendre_design_matrix_2D <- function(degree, X_normalized) {
-  # X_normalized should have two columns in [-1,1]
-  p <- 6
-  n <- nrow(X_normalized)
-  temp <- X_normalized[,1]
-  conc <- X_normalized[,2]
-  X_dm <- matrix(NA, nrow=n, ncol=p)  
-  # Legendre 0
-  
-  return(X_dm)
-}
+
 
 
 
