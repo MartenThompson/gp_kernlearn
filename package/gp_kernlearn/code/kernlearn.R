@@ -308,6 +308,50 @@ fit_kernlearn <- function(b.X, basis_maker, Y.list) {
   ))
 }
 
+fit_kernlearn_Xunique <- function(b.X.list, basis_maker, Y.list) {
+  degree <- dim(b.X.list[[1]])[2]-1
+  beta.manysamples.pri <- NA
+  beta.manysamples.alt <- NA
+  n.train.data <- length(Y.list)
+  
+  for (r in 1:n.train.data) {
+    cat(r, '/', n.train.data, '. ')
+    Y <- Y.list[[r]]
+    
+    #silent <- capture.output(
+    br.out <- stan_glm(Y ~ b.X.list[[r]][,2:(degree+1)], family=gaussian())#)
+    beta.samples <- matrix(unlist(br.out$stanfit@sim$samples[[1]][[1]]), ncol=1)
+    for (i in 2:(degree+1)) {
+      new <- matrix(unlist(br.out$stanfit@sim$samples[[1]][[i]]), ncol=1)
+      beta.samples <- cbind(beta.samples, new)
+    }
+    
+    if (1==r) {
+      beta.manysamples <- beta.samples
+    } else {
+      beta.manysamples <- rbind(beta.manysamples, beta.samples)
+    }
+  }
+  
+  E <- apply(beta.manysamples, 2, mean)
+  V <- cov(beta.manysamples)
+  
+  X.test <-  matrix(rep(seq(-1,1,length.out=length(Y.list[[1]])),2), ncol=2) # TODO 2D
+  #matrix(seq(-5,5,length.out=20), ncol=1)
+  post.ests <- posterior_test_meanvar_brev(E, V, X, Y.list[[1]], X.test, basis_maker)
+  K.hat <- post.ests$kern.pieces$K.train
+
+  return(list(
+    K.est = K.hat,
+    stan.output =br.out,
+    Y.train = Y.list,
+    b.X.list.train = b.X.list,
+    basis_maker = basis_maker,
+    E.est=E,
+    V.est=V
+  ))
+}
+
 
 make_predictions <-function(f, slug) {
   cat(f, '\n')
