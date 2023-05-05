@@ -308,7 +308,7 @@ fit_kernlearn <- function(b.X, basis_maker, Y.list) {
   ))
 }
 
-fit_kernlearn_Xunique <- function(b.X.list, basis_maker, Y.list) {
+fit_kernlearn_Xunique <- function(b.X.list, basis_maker, Y.list, X.long, Y.long, stan.chains, stan.iter, EV.only=FALSE) {
   degree <- dim(b.X.list[[1]])[2]-1
   beta.manysamples.pri <- NA
   beta.manysamples.alt <- NA
@@ -319,7 +319,7 @@ fit_kernlearn_Xunique <- function(b.X.list, basis_maker, Y.list) {
     Y <- Y.list[[r]]
     
     #silent <- capture.output(
-    br.out <- stan_glm(Y ~ b.X.list[[r]][,2:(degree+1)], family=gaussian())#)
+    br.out <- stan_glm(Y ~ b.X.list[[r]][,2:(degree+1)], family=gaussian(), iter=stan.iter, chains=stan.chains)#, cores = (parallel::detectCores()-2))
     beta.samples <- matrix(unlist(br.out$stanfit@sim$samples[[1]][[1]]), ncol=1)
     for (i in 2:(degree+1)) {
       new <- matrix(unlist(br.out$stanfit@sim$samples[[1]][[i]]), ncol=1)
@@ -336,9 +336,16 @@ fit_kernlearn_Xunique <- function(b.X.list, basis_maker, Y.list) {
   E <- apply(beta.manysamples, 2, mean)
   V <- cov(beta.manysamples)
   
+  if(EV.only) {
+    return(list(
+      E.est=E,
+      V.est=V
+    ))
+  }
+  
   X.test <-  matrix(rep(seq(-1,1,length.out=length(Y.list[[1]])),2), ncol=2) # TODO 2D
   #matrix(seq(-5,5,length.out=20), ncol=1)
-  post.ests <- posterior_test_meanvar_brev(E, V, X, Y.list[[1]], X.test, basis_maker)
+  post.ests <- posterior_test_meanvar_brev(E, V, X.long, Y.long, X.test, basis_maker)
   K.hat <- post.ests$kern.pieces$K.train
 
   return(list(

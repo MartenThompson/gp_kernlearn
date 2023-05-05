@@ -87,6 +87,58 @@ plot3D_halfpred <- function(X.test, Y.test, Y.pred, X.train, Y.train) {
   return(p)
 }
 
+plot3D_many <- function(X.list, Y.list) {
+  p <- plot_ly() 
+  for (i in 1:length(Y.list)) {
+    p <- add_markers(p, x=X.list[[i]][,1], y=X.list[[i]][,2], z=Y.list[[i]])
+  }
+  
+  p <- layout(p, legend = list(x = 0.1, y = .75),
+           scene=list(
+             xaxis=list(title='Temp.'),
+             yaxis=list(title='Conc.'),
+             zaxis=list(title='Gibbs Energy')))
+  
+  #p <- plot_ly(colorscale = c('#FFE1A1', '#683531')) %>%
+  #  add_markers(x=rep(X.test[,1],1), y=rep(X.test[,2],1), z=c(Y.test),
+  #              color=I('black'), name='Observed')%>%#c(rep('Observed', length(Y.test)), rep('Estimated', length(Y.pred)))) %>%
+  # add_markers(x=rep(X.test[,1],1), y=rep(X.test[,2],1), z=c(Y.pred),
+  #              color=I('green'), name='Predicted')%>%
+  
+  
+  return(p)
+}
+
+
+plot3D_halfpred <- function(X.test, Y.test, Y.pred, X.train, Y.train) {
+  plot.data <- data.frame(
+    X1=c(rep(X.test[,1],2), rep(X.train[,1],1)),
+    X2=c(rep(X.test[,2],2), rep(X.train[,2], 1)),
+    Z=c(Y.test, Y.pred, Y.train),
+    type=c(rep('Test Values', length(Y.test)), 
+           rep('Predicted', length(Y.pred)),
+           rep('Train Values', length(Y.train)))
+  )
+  colors <- c('black', 'green', 'gray')
+  
+  p <- plot_ly(plot.data, x=~X1, y=~X2, z=~Z, color=~type, colors=colors, opacity=1) %>%
+    add_markers() %>%
+    layout(legend = list(x = 0.1, y = .75),
+           scene=list(
+             xaxis=list(title='Temp.'),
+             yaxis=list(title='Conc.'),
+             zaxis=list(title='Gibbs Energy')))
+  
+  #p <- plot_ly(colorscale = c('#FFE1A1', '#683531')) %>%
+  #  add_markers(x=rep(X.test[,1],1), y=rep(X.test[,2],1), z=c(Y.test),
+  #              color=I('black'), name='Observed')%>%#c(rep('Observed', length(Y.test)), rep('Estimated', length(Y.pred)))) %>%
+  # add_markers(x=rep(X.test[,1],1), y=rep(X.test[,2],1), z=c(Y.pred),
+  #              color=I('green'), name='Predicted')%>%
+  
+  
+  return(p)
+}
+
 one_time_data_clean <- function() {
   dat.path <- './package/gp_kernlearn/data/jan2022_bcc_files/'
   save.path <- './package/gp_kernlearn/code/output/gibbs/'
@@ -210,17 +262,29 @@ X.test.temphigh <- X.test[X.test[,1] >= x.temp.q50, ]
 Y.test.templow <- Y.test[X.test[,1] < x.temp.q50]
 Y.test.temphigh <- Y.test[X.test[,1] >= x.temp.q50]
 post.out.obs.templow <- posterior_test_meanvar_brev(E.beta, V.beta,
+<<<<<<< HEAD
                                                     rbind(X.train.long, X.test.templow), c(Y.train.long, Y.test.templow),
                                                     X.test.temphigh, basis_maker)
+=======
+                                                 rbind(X.train.long, X.test.templow), c(Y.train.long, Y.test.templow),
+                                                 X.test.temphigh, basis_maker)
+>>>>>>> 0739f12bf395c93660be3ce7ca2e1b30ddf1035d
 
 plot3D_halfpred(X.test.temphigh, Y.test.temphigh, post.out.obs.templow$post.test.mean, X.test.templow, Y.test.templow)
 
 
 X.test.grid <- as.matrix(expand.grid(seq(min(X.test[,1]),max(X.test[,1]), length.out=30),
+<<<<<<< HEAD
                                      seq(min(X.test[,2]),max(X.test[,2]), length.out=30), KEEP.OUT.ATTRS = FALSE))
 post.out.obs.templow.grid <- posterior_test_meanvar_brev(E.beta, V.beta,
                                                          X.test.templow, Y.test.templow,
                                                          X.test.grid, basis_maker)
+=======
+                           seq(min(X.test[,2]),max(X.test[,2]), length.out=30), KEEP.OUT.ATTRS = FALSE))
+post.out.obs.templow.grid <- posterior_test_meanvar_brev(E.beta, V.beta,
+                                                               X.test.templow, Y.test.templow,
+                                                               X.test.grid, basis_maker)
+>>>>>>> 0739f12bf395c93660be3ce7ca2e1b30ddf1035d
 plot3D_piped(X.test.grid, rep(0.09987,nrow(X.test.grid)), post.out.obs.templow.grid$post.test.mean)
 
 
@@ -229,8 +293,13 @@ plot3D_piped(X.test.grid, rep(0.09987,nrow(X.test.grid)), post.out.obs.templow.g
 
 
 post.out.obs.templow.skinnycond <- posterior_test_meanvar_brev(E.beta, V.beta,
+<<<<<<< HEAD
                                                                X.test.templow, Y.test.templow,
                                                                X.test.temphigh, basis_maker)
+=======
+                                                    X.test.templow, Y.test.templow,
+                                                    X.test.temphigh, basis_maker)
+>>>>>>> 0739f12bf395c93660be3ce7ca2e1b30ddf1035d
 
 plot3D_halfpred(X.test.temphigh, Y.test.temphigh, post.out.obs.templow.skinnycond$post.test.mean, X.test.templow, Y.test.templow)
 
@@ -331,4 +400,3 @@ post.out.obs.templow.skinnycond <- posterior_test_meanvar_brev(E.beta, V.beta,
                                                                X.test.temphigh, basis_maker)
 
 plot3D_halfpred(X.test.temphigh, Y.test.temphigh, post.out.obs.templow.skinnycond$post.test.mean, X.test.templow, Y.test.templow)
-
