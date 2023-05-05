@@ -23,7 +23,8 @@ plot3D_piped <- function(X.test, Y.test, Y.pred) {
            scene=list(
              xaxis=list(title='Temp.'),
              yaxis=list(title='Conc.'),
-             zaxis=list(title='Gibbs Energy')))
+             zaxis=list(title='Gibbs Energy'),
+             camera = list(eye = list(x = 1, y = 0, z = 1))))
   
   #p <- plot_ly(colorscale = c('#FFE1A1', '#683531')) %>%
   #  add_markers(x=rep(X.test[,1],1), y=rep(X.test[,2],1), z=c(Y.test),
@@ -108,8 +109,8 @@ basis_maker <- make_legendre2D_basis_maker(leg.deg)
 
 n.train <- 2 #floor(0.5*n.total)
 b.X.train <- list()
-X.train.long <- X.train[[1]]
-Y.train.long <- Y.train[[1]]
+X.train.long <- X.all[[1]]
+Y.train.long <- Y.all[[1]]
 for (i in 1:n.train) {
   cat(i,' ')
   b.X.train[[i]] <- basis_maker(X.all[[i]])
@@ -130,6 +131,7 @@ X.test <- X.all[[test.itr]]
 post.out <- posterior_test_meanvar_brev(E.beta, V.beta, 
                                         X.train.long, Y.train.long, 
                                         X.test, basis_maker)
+
 p <- plot3D_piped(X.train[[4]], Y.train[[4]], post.out$post.test.mean)
 saveRDS(list(leg.deg=leg.deg,
              n.train=n.train,
