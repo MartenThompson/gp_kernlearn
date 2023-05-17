@@ -69,20 +69,17 @@ for (i in 1:n.train) {
   }
 }
 
+plot3D_many(X.all.ord[1:n.train], Y.all.ord[1:n.train])
+
 stan.chains <- 2
-stan.iters <- 200
+stan.iters <- 500
 kernlearn.out <- fit_kernlearn_Xunique(b.X.train, basis_maker, Y.all.ord[1:n.train], X.train.long, Y.train.long, 
                                        stan.chains=stan.chains, stan.iter=stan.iters, EV.only = TRUE)
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#### Save ####
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 save.path <- paste0(root.path, 'analysis_deg', leg.deg, '_ntr', n.train, '_stan', stan.chains, '-', stan.iters, '/')
 dir.create(save.path)
 
 file.copy('./package/gp_kernlearn/code/gibbs_analysis.R', paste0(save.path, 'gibbs_analysis.R'))
-
-plot3D_many(X.all.ord[1:n.train], Y.all.ord[1:n.train])
 
 saveRDS(list(leg.deg=leg.deg,
              n.train=n.train,
