@@ -44,6 +44,7 @@ plot_yobs <- function(X, Y.train, n.plot) {
 }
 
 stan_beta_post <- function(Y, B.0, n.mcmc) {
+  J <- dim(B.0)[2]
   br.out <- stan_glm(Y ~ B.0-1, family=gaussian(), iter=n.mcmc)
   beta.post <- matrix(NA, nrow=n.mcmc, ncol=J)
   for (j in 1:J) {
@@ -108,6 +109,32 @@ est_acv_within <- function(Y.list, B.0, n.mcmc, lag=(N.x-1), type='covariance') 
     }
   }
   
+  return(list(
+    acv.all=acv.all,
+    yhat.all=yhat.all
+  ))
+}
+
+
+
+
+# ACV calculated from Yhat1, then add to it the ACV from [mean(Yhat1) ... mean(YhatR)] \in reals^{R}.
+# Do this for each mcmc sample and for each r = 1,...,R.
+# The max lag is min(N.x, R).
+est_acv_combo <- function(Y.list, B.0, n.mcmc, lag=(N.x-1), type='covariance') {
+  N.x <- dim(B.0)[1]
+  R <- length(Y.list)
+  
+  if (lag >= N.x) {
+    stop('Lag cannot be greater than or equal to N.x=', N.x, ', was ', lag)
+  }
+  
+  aw <- est_acv_within(Y.list, B.0, n.mcmc, lag, type)
+  
+  acv.all <- aw$acv.all # ends up being n.mcmc*R rows
+  yhat.all <- aw$yhat.all  # ends up being n.mcmc*R rows
+  
+  
   # Get between sample variance, having n.mcmc-many groups each with R values.
   yhat.all.means <- apply(yhat.all, 1, mean)
   acf.bt.mcmc <- matrix(NA, nrow=n.mcmc, ncol=(lag+1))
@@ -135,7 +162,7 @@ est_acv_within <- function(Y.list, B.0, n.mcmc, lag=(N.x-1), type='covariance') 
 }
 
 
-
+# ACV calculated using concatenated [Yhat1 ... YhatR] \in real^{N.x*n.mcmc} for each mcmc sample
 est_acv_bt <- function(Y.list, B.0, n.mcmc, lag=(N.x-1), type='covariance') {
   N.x <- dim(B.0)[1]
   R <- length(Y.list)
