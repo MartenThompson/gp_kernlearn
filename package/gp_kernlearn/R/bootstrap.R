@@ -1,9 +1,3 @@
-
-
-
-
-
-
 bootstrap_stat_dist <- function(statistic, model_gen, n.boot) {
   dummy <- model_gen()
   d <- length(statistic(dummy))
