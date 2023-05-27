@@ -260,7 +260,7 @@ matern_kernel_euc <- function(X, sigma.0, rho, nu, fuzz) {
 ####################
 library(rstanarm)
 
-fit_kernlearn <- function(b.X, basis_maker, Y.list) {
+fit_kernlearn <- function(b.X, X, basis_maker, Y.list) {
   degree <- dim(b.X)[2]-1
   beta.manysamples.pri <- NA
   beta.manysamples.alt <- NA
@@ -359,62 +359,3 @@ fit_kernlearn_Xunique <- function(b.X.list, basis_maker, Y.list, X.long, Y.long,
   ))
 }
 
-
-make_predictions <-function(f, slug) {
-  cat(f, '\n')
-  dat <- read_normalize_unit_square(f)
-  temp.midpoint <- max(dat$X[,1]) - (max(dat$X[,1]) - min(dat$X[,1]))/2
-  train_on_lowT <- dat$X[,1] < temp.midpoint
-  
-  y.0 <- dat$Y[train_on_lowT]
-  X.train <- dat$X[train_on_lowT,]
-  y.test <- dat$Y[!train_on_lowT]
-  X.test <- dat$X[!train_on_lowT,]
-  
-  dataset_name <- strsplit(f, '.', fixed=TRUE)[[1]][1]
-  abc_output_name <- paste0('^', dataset_name, slug)
-  abc_output <- read.csv(paste0('ms_eg/output/abc_output/', 
-                                dir('ms_eg/output/abc_output/', pattern=abc_output_name)[1]))
-  cat(nrow(X.train), ' ', nrow(X.test), '\n')
-  V.leg <- cov(as.matrix(abc_output[,1:6]))
-  E.leg <- apply(abc_output[,1:6], 2, mean)
-  kern_pieces <- make_kern(X.train, X.test, V.leg)
-  post_ests <- posterior_test_meanvar(X.test, X.train, kern_pieces$K.traininv, 
-                                      kern_pieces$K.startr, kern_pieces$K.star,
-                                      E.leg, y.0)
-  
-  pred_data <- data.frame(
-    temp = X.test[,1],
-    conc = X.test[,2],
-    y.true = y.test,
-    pred = post_ests$post.test.mean,
-    pred_se = 2*sqrt(diag(post_ests$post.test.var))
-  )
-  
-  obs_data <- data.frame(
-    temp = X.train[,1],
-    conc = X.train[,2],
-    y.true = y.0,
-    pred = rep(NA, length(y.0)),
-    pred_se = rep(NA, length(y.0))
-  )
-  
-  return(list(
-    preds = pred_data,
-    obs = obs_data
-  ))
-}
-
-
-# itr <- 13
-# output <- make_predictions(files[itr], 'trainlowT_10min6_l2_M100n')
-# plot.data <- data.frame(
-#   temp = c(output$preds$temp, output$preds$temp, output$obs$temp),
-#   conc = c(output$preds$conc, output$preds$conc, output$obs$conc),
-#   gibb = c(output$preds$pred, output$preds$y.true, output$obs$y.true),
-#   obs_or_pred = c(rep('pred', nrow(output$preds)), rep('obs', nrow(output$preds)+nrow(output$obs)))
-# )
-
-
-#plot_ly(x=plot.data$temp, y=plot.data$conc, z=plot.data$gibb, type="scatter3d", mode="markers",color=plot.data$obs_or_pred)
-#paste0(strsplit(files[itr], '.', fixed=TRUE)[[1]][1],'trainlowT_10min6_l2_M100n')
