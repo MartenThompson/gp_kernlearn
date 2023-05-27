@@ -59,7 +59,7 @@ B.0 <- basis_maker(X)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #lag <- ifelse(n < 100 || R < 100, min(floor(0.75*R), floor(0.5*n)), 25)
 lag <- min(floor(0.75*R), floor(0.5*n), 75)
-acv.cov.within <- est_acv_within(Y.train, B.0, 1e3, lag, 'covariance')
+acv.cov.within <- est_acv_combo(Y.train, B.0, 1e3, lag, 'covariance')
 saveRDS(acv.cov.within, paste0(save.slug, 'acv_cov','_J', J, '_L', lag, '.RData'))
 #acv.cor.within <- est_acv_within(Y.train, B.0, 1e3, lag, 'correlation')
 
