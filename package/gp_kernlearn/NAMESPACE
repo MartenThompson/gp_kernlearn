@@ -1,0 +1,13 @@
+#exportPattern("^[[:alpha:]]+")
+import(graphics, stats, utils, rstanarm)
+importFrom('grDevices', 'rgb')
+
+# kernel estimation via regression
+
+# kernel estimation via acv
+export(est_acv_combo)
+
+# utilities
+export(gen_data)
+export(make_legendre1D_basis_maker)
+export(matern_kernel_euc)

@@ -1,0 +1,22 @@
+Package: gpkernlearn
+Type: Package
+Version: 0.1.0
+Date: 2023-05-21
+Title: Gaussian Process Kernel Learning Strategies
+Author: Marten L. Thompson <thom7058@umn.edu>
+Maintainer: Snigdhansu Chattergee <chatt019@umn.edu>
+Description: Implements several regression-based strategies for empirically learning Gaussian process kernel functions. 
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: 
+   ggplot2,
+   mvtnorm,
+   rstanarm,
+   stats
+Suggests: 
+   knitr, 
+   rmarkdown,
+   testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
