@@ -1,10 +1,10 @@
 rm(list=ls())
 
 setwd('~/Git/gp_kernlearn/')
-source('package/gp_kernlearn/code/kernlearn.R')
-source('package/gp_kernlearn/code/basis_orthog_poly.R')
-source('package/gp_kernlearn/code/acv_est.R')
-source('package/gp_kernlearn/code/gibbs_vis.R')
+source('package/gp_kernlearn/R/kernlearn.R')
+source('package/gp_kernlearn/R/basis_orthog_poly.R')
+source('package/gp_kernlearn/R/acv_est.R')
+source('code/gibbs_vis.R')
 
 require(plotly)
 
@@ -17,9 +17,9 @@ skinny <- function(kernlearn_out) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Data Import ####
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-root.path <- './package/gp_kernlearn/code/output/gibbs/'
-Y.all <- readRDS(paste0('./package/gp_kernlearn/code/output/gibbs/', 'Y_scaled.Rdata'))
-X.all <- readRDS(paste0('./package/gp_kernlearn/code/output/gibbs/', 'X_scaled.Rdata'))
+root.path <- './code/output/gibbs/'
+Y.all <- readRDS(paste0('./code/output/gibbs/', 'Y_scaled.Rdata'))
+X.all <- readRDS(paste0('./code/output/gibbs/', 'X_scaled.Rdata'))
 
 leg.deg <- 2
 basis_maker <- make_legendre2D_basis_maker(leg.deg)
@@ -55,7 +55,7 @@ Y.all.ord <- Y.all.ord[-1] # too small, not interesting
 X.all.ord <- X.all.ord[-1]
 plot(ts(as.numeric(lapply(Y.all.ord, length))))
 
-n.train <- 50 #floor(0.5*n.total)
+n.train <- 75 #floor(0.5*n.total)
 b.X.train <- list()
 X.train.long <- X.all.ord[[1]]
 Y.train.long <- Y.all.ord[[1]]
@@ -94,6 +94,10 @@ saveRDS(list(leg.deg=leg.deg,
 
 E.beta <- kernlearn.out$E.est
 V.beta <- kernlearn.out$V.est
+
+png(paste0(save.path, 'Vbeta.png'), height=5, width=5, units='in', res=100)
+image(V.beta[nrow(V.beta):1,], xaxt='n', yaxt='n')
+dev.off()
 
 test.itr <- 100 #n.train + 1
 X.test <- X.all[[test.itr]]

@@ -159,3 +159,10 @@ one_time_data_clean <- function() {
 #                                                    X.test.temphigh, basis_maker)
 
 #plot3D_halfpred(X.test.temphigh, Y.test.temphigh, post.out.obs.templow$post.test.mean, X.test.templow, Y.test.templow)
+
+
+
+
+
+
+
