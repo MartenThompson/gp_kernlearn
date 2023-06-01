@@ -55,7 +55,7 @@ Y.all.ord <- Y.all.ord[-1] # too small, not interesting
 X.all.ord <- X.all.ord[-1]
 plot(ts(as.numeric(lapply(Y.all.ord, length))))
 
-n.train <- 75 #floor(0.5*n.total)
+n.train <- 50 #floor(0.5*n.total)
 b.X.train <- list()
 X.train.long <- X.all.ord[[1]]
 Y.train.long <- Y.all.ord[[1]]
@@ -105,11 +105,12 @@ Y.test <- Y.all[[test.itr]]
 
 
 summary(X.test)
-x.temp.q50 <- quantile(X.test[,1], 0.5)
-X.test.templow <- X.test[X.test[,1] <= x.temp.q50, ]
-X.test.temphigh <- X.test[X.test[,1] > x.temp.q50, ]
-Y.test.templow <- Y.test[X.test[,1] <= x.temp.q50]
-Y.test.temphigh <- Y.test[X.test[,1] > x.temp.q50]
+#x.temp.q50 <- quantile(X.test[,1], 0.5)
+x.temp.q10 <- quantile(X.test[,1], 0.1)
+X.test.templow <- X.test[X.test[,1] <= x.temp.q10, ]
+X.test.temphigh <- X.test[X.test[,1] > x.temp.q10, ]
+Y.test.templow <- Y.test[X.test[,1] <= x.temp.q10]
+Y.test.temphigh <- Y.test[X.test[,1] > x.temp.q10]
 
 
 #post.out.obs.templow.skinnycond <- posterior_test_meanvar_brev(E.beta, V.beta,
