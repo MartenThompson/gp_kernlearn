@@ -260,7 +260,7 @@ matern_kernel_euc <- function(X, sigma.0, rho, nu, fuzz) {
 ####################
 library(rstanarm)
 
-fit_kernlearn <- function(b.X, X, basis_maker, Y.list) {
+fit_kernlearn <- function(b.X, X, basis_maker, Y.list, EV.only=TRUE) {
   degree <- dim(b.X)[2]-1
   beta.manysamples.pri <- NA
   beta.manysamples.alt <- NA
@@ -285,6 +285,13 @@ fit_kernlearn <- function(b.X, X, basis_maker, Y.list) {
   
   E <- apply(beta.manysamples, 2, mean)
   V <- cov(beta.manysamples)
+  
+  if(EV.only) {
+    return(list(
+      E.est=E,
+      V.est=V
+    ))
+  }
   
   X.test <- matrix(seq(-5,5,length.out=20), ncol=1)
   post.ests <- posterior_test_meanvar_brev(E, V, X, Y.list[[1]], X.test, basis_maker)
