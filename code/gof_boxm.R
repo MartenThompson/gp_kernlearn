@@ -25,8 +25,8 @@ rm(list=ls())
 
 setwd('~/Git/gp_kernlearn/')
 library(rstanarm)
-source('package/gp_kernlearn/code/basis_orthog_poly.R')
-source('package/gp_kernlearn/code/kernlearn.R')
+source('package/gp_kernlearn/R/basis_orthog_poly.R')
+source('package/gp_kernlearn/R/kernlearn.R')
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Kern Learn Loop ####
