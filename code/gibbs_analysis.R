@@ -82,7 +82,7 @@ dir.create(save.path)
 
 file.copy('./package/gp_kernlearn/code/gibbs_analysis.R', paste0(save.path, 'gibbs_analysis.R'))
 
-plot3D_many(X.all.ord[1:n.train], Y.all.ord[1:n.train])
+plot3D_many(X.all.ord[200:206], Y.all.ord[200:206])
 
 saveRDS(list(leg.deg=leg.deg,
              n.train=n.train,
@@ -92,6 +92,12 @@ saveRDS(list(leg.deg=leg.deg,
              skinny(kernlearn.out))
         , paste0(save.path, 'analysis_ntr', n.train, '_stan', stan.chains, '-', stan.iters, '.Rdata'))
 
+###
+out <- readRDS('./code/output/gibbs/analysis_deg2_ntr75_stan2-200/analysis_ntr75_stan2-200.Rdata')
+E.beta <- out[[6]]$E.est
+V.beta <- out[[6]]$V.est
+###
+
 E.beta <- kernlearn.out$E.est
 V.beta <- kernlearn.out$V.est
 
@@ -99,18 +105,18 @@ png(paste0(save.path, 'Vbeta.png'), height=5, width=5, units='in', res=100)
 image(V.beta[nrow(V.beta):1,], xaxt='n', yaxt='n')
 dev.off()
 
-test.itr <- 100 #n.train + 1
-X.test <- X.all[[test.itr]]
-Y.test <- Y.all[[test.itr]]
+test.itr <- 205 
+X.test <- X.all.ord[[test.itr]]
+Y.test <- Y.all.ord[[test.itr]]
 
 
 summary(X.test)
-#x.temp.q50 <- quantile(X.test[,1], 0.5)
-x.temp.q10 <- quantile(X.test[,1], 0.1)
-X.test.templow <- X.test[X.test[,1] <= x.temp.q10, ]
-X.test.temphigh <- X.test[X.test[,1] > x.temp.q10, ]
-Y.test.templow <- Y.test[X.test[,1] <= x.temp.q10]
-Y.test.temphigh <- Y.test[X.test[,1] > x.temp.q10]
+x.temp.q90 <- quantile(X.test[,1], 0.9)
+#x.temp.q10 <- quantile(X.test[,1], 0.1)
+X.test.templow <- X.test[X.test[,1] <= x.temp.q90, ]
+X.test.temphigh <- X.test[X.test[,1] > x.temp.q90, ]
+Y.test.templow <- Y.test[X.test[,1] <= x.temp.q90]
+Y.test.temphigh <- Y.test[X.test[,1] > x.temp.q90]
 
 
 #post.out.obs.templow.skinnycond <- posterior_test_meanvar_brev(E.beta, V.beta,
@@ -121,12 +127,13 @@ Y.test.temphigh <- Y.test[X.test[,1] > x.temp.q10]
 
 X.test.grid <- as.matrix(expand.grid(seq(min(X.test[,1]),max(X.test[,1]), length.out=30),
                                      seq(min(X.test[,2]),max(X.test[,2]), length.out=30), KEEP.OUT.ATTRS = FALSE))
-post.out.obs.templow.grid <- posterior_test_meanvar_brev(E.beta, V.beta,
+post.out.obs.templow.grid.205.90 <- posterior_test_meanvar_brev(E.beta, V.beta,
                                                          X.test.templow, Y.test.templow,
                                                          X.test.grid, basis_maker)
 plot3D_many(list(X.test.templow,X.test.temphigh, X.test.grid), 
-            list(Y.test.templow, Y.test.temphigh, post.out.obs.templow.grid$post.test.mean), 
+            list(Y.test.templow, Y.test.temphigh, post.out.obs.templow.grid.205.90$post.test.mean), 
             c('Conditioned', 'Held Out', 'Post. Mean'), 
             c(I('gray'), I('black'), I('green')))
 
+hist(post.out.obs.templow.grid.100$post.test.mean - post.out.obs.templow.grid.205$post.test.mean, breaks=50)
 
